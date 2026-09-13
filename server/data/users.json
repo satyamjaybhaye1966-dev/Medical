@@ -1,0 +1,63 @@
+[
+  {
+    "id": "user-admin-1",
+    "name": "MR. Rushikesh Suresh Mante",
+    "email": "admin@gurumedical.com",
+    "passwordHash": "admin123",
+    "role": "admin",
+    "phone": "8237729148",
+    "address": "Guru Medical Store, Sawkhed Tejan, Sindkhed Raja, Buldhana",
+    "createdAt": "2026-09-13T15:43:36.800Z"
+  },
+  {
+    "id": "user-cust-1",
+    "name": "Satyam Jaybhaye",
+    "email": "satyam@example.com",
+    "passwordHash": "customer123",
+    "role": "customer",
+    "phone": "8237729148",
+    "address": "Sawkhed Tejan, Tq. Sindkhed Raja, Dist. Buldhana",
+    "createdAt": "2026-09-13T15:43:36.800Z"
+  },
+  {
+    "id": "user-1789314240033",
+    "name": "Ramesh B. Deshmukh",
+    "email": "ramesh@test.com",
+    "passwordHash": "testpassword123",
+    "role": "customer",
+    "phone": "9988776655",
+    "address": "Sawkhed Tejan",
+    "createdAt": "2026-09-13T15:44:00.033Z",
+    "updatedAt": "2026-09-13T15:44:09.092Z"
+  },
+  {
+    "id": "user-1789315564763",
+    "name": "Test User",
+    "email": "test1234@gmail.com",
+    "passwordHash": "mypassword",
+    "role": "customer",
+    "phone": "9988776655",
+    "address": "Sawkhed Tejan",
+    "createdAt": "2026-09-13T16:06:04.763Z"
+  },
+  {
+    "id": "user-1789315673770",
+    "name": "Rahul Shinde",
+    "email": "rahul@gmail.com",
+    "passwordHash": "rahulpass123",
+    "role": "customer",
+    "phone": "9811223344",
+    "address": "Sawkhed Tejan",
+    "createdAt": "2026-09-13T16:07:53.770Z"
+  },
+  {
+    "id": "user-1789325975183",
+    "name": "Bharat Salunke",
+    "email": "salunkerushi715@gmail.com",
+    "passwordHash": "123456",
+    "role": "customer",
+    "phone": "7387432925",
+    "address": "Sawkhed Tejan, Sindkhed Raja",
+    "createdAt": "2026-09-13T18:59:35.187Z"
+  }
+]

@@ -1,0 +1,83 @@
+[
+  {
+    "id": "ORD-9021",
+    "customerName": "Gajanan Patil",
+    "customerPhone": "9822334455",
+    "deliveryAddress": "Main Galli, Sawkhed Tejan, Tq. Sindkhed Raja",
+    "orderDate": "2026-09-12 14:30",
+    "status": "Pending",
+    "paymentMethod": "Cash on Delivery",
+    "totalAmount": 260.5,
+    "items": [
+      {
+        "id": "med-1",
+        "name": "Paracetamol 650mg (Dolo 650)",
+        "price": 30.5,
+        "quantity": 2
+      },
+      {
+        "id": "med-4",
+        "name": "Pantoprazole 40mg + Domperidone (Pan-D)",
+        "price": 145,
+        "quantity": 1
+      },
+      {
+        "id": "med-9",
+        "name": "Becosules Z Capsules",
+        "price": 48,
+        "quantity": 1
+      }
+    ],
+    "notes": "Please deliver after 5 PM near Gram Panchayat."
+  },
+  {
+    "id": "ORD-9020",
+    "customerName": "Sunita Vijay Deshmukh",
+    "customerPhone": "9421556677",
+    "deliveryAddress": "Near ZP School, Sawkhed Tejan",
+    "orderDate": "2026-09-12 11:15",
+    "status": "Packed",
+    "paymentMethod": "UPI / QR Scan",
+    "totalAmount": 355,
+    "items": [
+      {
+        "id": "med-5",
+        "name": "Telmisartan 40mg (Telma 40)",
+        "price": 170,
+        "quantity": 1
+      },
+      {
+        "id": "med-3",
+        "name": "Amoxicillin & Potassium Clavulanate (Augmentin 625 Duo)",
+        "price": 185,
+        "quantity": 1
+      }
+    ],
+    "notes": "Prescription verified."
+  },
+  {
+    "id": "ORD-9018",
+    "customerName": "Rameshwar Kharat",
+    "customerPhone": "9158443322",
+    "deliveryAddress": "At Post Kingaon Jatu, Tq. Sindkhed Raja",
+    "orderDate": "2026-09-11 16:45",
+    "status": "Delivered",
+    "paymentMethod": "Cash on Delivery",
+    "totalAmount": 290,
+    "items": [
+      {
+        "id": "med-8",
+        "name": "Liv 52 DS Tablets",
+        "price": 165,
+        "quantity": 1
+      },
+      {
+        "id": "med-10",
+        "name": "Volini Pain Relief Gel (50g)",
+        "price": 125,
+        "quantity": 1
+      }
+    ],
+    "notes": "Delivered safely."
+  }
+]

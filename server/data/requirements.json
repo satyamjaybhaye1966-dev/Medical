@@ -1,0 +1,28 @@
+[
+  {
+    "id": "REQ-101",
+    "customerName": "Vikas Jadhav",
+    "phone": "9765443321",
+    "address": "Sawkhed Tejan",
+    "medicineName": "Ecosprin AV 75/20 Capsules",
+    "quantity": "2 strips",
+    "urgency": "High (within 24 hours)",
+    "prescriptionImage": "",
+    "status": "Procured & Ready for Pickup",
+    "date": "2026-09-12 10:20",
+    "ownerNotes": "Arrived from distributor in Jalna. Kept at counter."
+  },
+  {
+    "id": "REQ-102",
+    "customerName": "Anita Kale",
+    "phone": "9881223344",
+    "address": "Dhotra, Tq. Sindkhed Raja",
+    "medicineName": "Novomix 30 Flexpen Insulin",
+    "quantity": "1 Pen",
+    "urgency": "Immediate Emergency",
+    "prescriptionImage": "",
+    "status": "Pending Verification",
+    "date": "2026-09-12 18:05",
+    "ownerNotes": "Checking with cold storage distributor."
+  }
+]
