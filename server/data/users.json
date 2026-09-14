@@ -59,5 +59,15 @@
     "phone": "7387432925",
     "address": "Sawkhed Tejan, Sindkhed Raja",
     "createdAt": "2026-09-13T18:59:35.187Z"
+  },
+  {
+    "id": "user-1789368964145",
+    "name": "Shivram Andhale",
+    "email": "shivramandhle9990@gmail.com",
+    "passwordHash": "123456",
+    "role": "customer",
+    "phone": "8805396389",
+    "address": "Sawkhed Tejan, Sindkhed Raja",
+    "createdAt": "2026-09-14T06:56:04.157Z"
   }
 ]

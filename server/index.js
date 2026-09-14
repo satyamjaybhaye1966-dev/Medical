@@ -231,8 +231,8 @@ initializeDatabase(initialMedicines, initialOrders, initialRequirements);
 // REST API ROUTES
 // -------------------------------------------------------------
 
-// Database Status Endpoint
-app.get('/api/db-status', (req, res) => {
+// Database Status Endpoint & Health Aliases
+app.get(['/api/db-status', '/api/status', '/health'], (req, res) => {
   res.json({
     status: 'online',
     postgres: getPostgresStatus(),
@@ -370,9 +370,34 @@ app.put('/api/medicines/:id', async (req, res) => {
             price = COALESCE($2, price),
             mrp = COALESCE($3, mrp),
             name = COALESCE($4, name),
-            category = COALESCE($5, category)
-        WHERE id = $6
-      `, [updateData.stock, updateData.price, updateData.mrp, updateData.name, updateData.category, id]);
+            generic_name = COALESCE($5, generic_name),
+            category = COALESCE($6, category),
+            unit = COALESCE($7, unit),
+            manufacturer = COALESCE($8, manufacturer),
+            prescription_required = COALESCE($9, prescription_required),
+            batch_no = COALESCE($10, batch_no),
+            expiry_date = COALESCE($11, expiry_date),
+            description = COALESCE($12, description),
+            dosage = COALESCE($13, dosage),
+            popular = COALESCE($14, popular)
+        WHERE id = $15
+      `, [
+        updateData.stock !== undefined ? Number(updateData.stock) : null,
+        updateData.price !== undefined ? Number(updateData.price) : null,
+        updateData.mrp !== undefined ? Number(updateData.mrp) : null,
+        updateData.name || null,
+        updateData.genericName || null,
+        updateData.category || null,
+        updateData.unit || null,
+        updateData.manufacturer || null,
+        updateData.prescriptionRequired !== undefined ? Boolean(updateData.prescriptionRequired) : null,
+        updateData.batchNo || null,
+        updateData.expiryDate || null,
+        updateData.description || null,
+        updateData.dosage || null,
+        updateData.popular !== undefined ? Boolean(updateData.popular) : null,
+        id
+      ]);
     }
   } catch (err) {
     console.error('Postgres update error:', err.message);
@@ -410,12 +435,28 @@ app.delete('/api/medicines/:id', async (req, res) => {
 
 // GET stock report summary
 app.get('/api/stock-report', async (req, res) => {
-  const medicines = readData(MEDICINES_FILE, initialMedicines);
+  let medicines = readData(MEDICINES_FILE, initialMedicines);
+  try {
+    if (getPostgresStatus().connected) {
+      const result = await pool.query(`
+        SELECT id, name, generic_name AS "genericName", category, 
+               CAST(price AS FLOAT) AS price, CAST(mrp AS FLOAT) AS mrp, 
+               stock, unit, manufacturer, prescription_required AS "prescriptionRequired", 
+               batch_no AS "batchNo", TO_CHAR(expiry_date, 'YYYY-MM-DD') AS "expiryDate", 
+               description, dosage, popular 
+        FROM medicines ORDER BY name ASC
+      `);
+      if (result.rows.length > 0) medicines = result.rows;
+    }
+  } catch (err) {
+    console.error('Postgres stock report error:', err.message);
+  }
+
   const totalItems = medicines.length;
-  const totalUnits = medicines.reduce((sum, m) => sum + (m.stock || 0), 0);
-  const totalInventoryValue = medicines.reduce((sum, m) => sum + ((m.stock || 0) * (m.price || 0)), 0);
-  const lowStock = medicines.filter(m => (m.stock || 0) > 0 && (m.stock || 0) <= 15);
-  const outOfStock = medicines.filter(m => (m.stock || 0) === 0);
+  const totalUnits = medicines.reduce((sum, m) => sum + (Number(m.stock) || 0), 0);
+  const totalInventoryValue = medicines.reduce((sum, m) => sum + ((Number(m.stock) || 0) * (Number(m.price) || 0)), 0);
+  const lowStock = medicines.filter(m => (Number(m.stock) || 0) > 0 && (Number(m.stock) || 0) <= 15);
+  const outOfStock = medicines.filter(m => (Number(m.stock) || 0) <= 0);
 
   const now = new Date();
   const expiringSoon = medicines.filter(m => {
@@ -447,6 +488,9 @@ app.get('/api/orders', async (req, res) => {
         SELECT id, customer_name AS "customerName", customer_phone AS "customerPhone",
                delivery_address AS "deliveryAddress", order_date AS "orderDate",
                status, payment_method AS "paymentMethod", CAST(total_amount AS FLOAT) AS "totalAmount",
+               prescription_required AS "prescriptionRequired",
+               prescription_verified AS "prescriptionVerified",
+               prescription_file AS "prescriptionFile",
                items, notes
         FROM orders ORDER BY created_at DESC
       `);
@@ -476,6 +520,8 @@ app.post('/api/orders', async (req, res) => {
     paymentMethod: req.body.paymentMethod || 'Cash on Delivery',
     totalAmount: Number(req.body.totalAmount) || 0,
     items: req.body.items || [],
+    prescriptionRequired: Boolean(req.body.prescriptionRequired),
+    prescriptionVerified: Boolean(req.body.prescriptionVerified),
     prescriptionFile: req.body.prescriptionFile || null,
     notes: req.body.notes || ''
   };
@@ -483,12 +529,15 @@ app.post('/api/orders', async (req, res) => {
   try {
     if (getPostgresStatus().connected) {
       await pool.query(`
-        INSERT INTO orders (id, customer_name, customer_phone, delivery_address, order_date, status, payment_method, total_amount, items, notes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO orders (id, customer_name, customer_phone, delivery_address, order_date, status, payment_method, total_amount, prescription_required, prescription_verified, prescription_file, items, notes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       `, [
         newOrder.id, newOrder.customerName, newOrder.customerPhone,
         newOrder.deliveryAddress, newOrder.orderDate, newOrder.status,
-        newOrder.paymentMethod, newOrder.totalAmount, JSON.stringify(newOrder.items), newOrder.notes
+        newOrder.paymentMethod, newOrder.totalAmount,
+        newOrder.prescriptionRequired, newOrder.prescriptionVerified,
+        newOrder.prescriptionFile,
+        JSON.stringify(newOrder.items), newOrder.notes
       ]);
     }
   } catch (err) {
@@ -509,7 +558,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
 
   try {
     if (getPostgresStatus().connected) {
-      await pool.query('UPDATE orders SET status = $1 WHERE id = $2', [status, id]);
+      await pool.query('UPDATE orders SET status = COALESCE($1, status), notes = COALESCE($2, notes) WHERE id = $3', [status, notes, id]);
     }
   } catch (err) {
     console.error('Postgres status update error:', err.message);
@@ -528,7 +577,22 @@ app.put('/api/orders/:id/status', async (req, res) => {
 });
 
 // GET customer requirements
-app.get('/api/requirements', (req, res) => {
+app.get('/api/requirements', async (req, res) => {
+  try {
+    if (getPostgresStatus().connected) {
+      const result = await pool.query(`
+        SELECT id, customer_name AS "customerName", phone, address,
+               medicine_name AS "medicineName", quantity, urgency,
+               doctor_name AS "doctorName", status, date,
+               owner_notes AS "ownerNotes"
+        FROM requirements ORDER BY created_at DESC
+      `);
+      return res.json(result.rows);
+    }
+  } catch (err) {
+    console.error('Postgres requirements get error:', err.message);
+  }
+
   const requirements = readData(REQUIREMENTS_FILE, initialRequirements);
   res.json(requirements);
 });
@@ -560,12 +624,44 @@ app.post('/api/requirements', async (req, res) => {
         newReq.status, newReq.date, newReq.ownerNotes
       ]);
     }
-  } catch (err) {}
+  } catch (err) {
+    console.error('Postgres requirement insert error:', err.message);
+  }
 
   const requirements = readData(REQUIREMENTS_FILE, initialRequirements);
   requirements.unshift(newReq);
   writeData(REQUIREMENTS_FILE, requirements);
   res.status(201).json(newReq);
+});
+
+// PUT update customer requirement status & owner notes
+app.put('/api/requirements/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status, ownerNotes } = req.body;
+
+  try {
+    if (getPostgresStatus().connected) {
+      await pool.query(`
+        UPDATE requirements 
+        SET status = COALESCE($1, status),
+            owner_notes = COALESCE($2, owner_notes)
+        WHERE id = $3
+      `, [status, ownerNotes, id]);
+    }
+  } catch (err) {
+    console.error('Postgres requirement update error:', err.message);
+  }
+
+  const requirements = readData(REQUIREMENTS_FILE, initialRequirements);
+  const index = requirements.findIndex(r => r.id === id);
+  if (index !== -1) {
+    if (status) requirements[index].status = status;
+    if (ownerNotes) requirements[index].ownerNotes = ownerNotes;
+    writeData(REQUIREMENTS_FILE, requirements);
+    return res.json(requirements[index]);
+  }
+
+  res.json({ id, status, ownerNotes });
 });
 
 // -------------------------------------------------------------

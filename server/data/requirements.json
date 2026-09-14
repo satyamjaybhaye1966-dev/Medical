@@ -1,5 +1,18 @@
 [
   {
+    "id": "REQ-869",
+    "customerName": "Shivram Andhale",
+    "phone": "8805396389",
+    "address": "Sawkhed Tejan, Sindkhed Raja",
+    "medicineName": "sumo",
+    "quantity": "1 Strip / Bottle",
+    "urgency": "High (within 24 hours)",
+    "doctorName": "Not specified",
+    "status": "Pending Review",
+    "date": "2026-09-14 07:00",
+    "ownerNotes": "Request received. Mr. Rushikesh Mante is checking distributor stock."
+  },
+  {
     "id": "REQ-101",
     "customerName": "Vikas Jadhav",
     "phone": "9765443321",

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const CatalogPage = () => {
-  const { medicines, setActiveTab, setIsPrescriptionModalOpen } = useStore();
+  const { medicines, setActiveTab, setIsPrescriptionModalOpen, addToCart } = useStore();
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -329,7 +329,7 @@ export const CatalogPage = () => {
                     <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
                       <button
                         className="btn btn-primary btn-sm"
-                        onClick={() => useStore().addToCart(med, 1)}
+                        onClick={() => addToCart(med, 1)}
                         disabled={med.stock <= 0}
                       >
                         Add to Cart
