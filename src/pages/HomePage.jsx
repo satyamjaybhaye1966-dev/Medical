@@ -20,8 +20,7 @@ import {
   Award,
   LogIn,
   UserPlus,
-  User,
-  Database
+  User
 } from 'lucide-react';
 
 export const HomePage = () => {

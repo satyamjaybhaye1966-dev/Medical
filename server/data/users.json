@@ -69,5 +69,35 @@
     "phone": "8805396389",
     "address": "Sawkhed Tejan, Sindkhed Raja",
     "createdAt": "2026-09-14T06:56:04.157Z"
+  },
+  {
+    "id": "user-1789538777177",
+    "name": "Rohan Nemane ❤️‍🔥",
+    "email": "rohannemane05@gmail.com",
+    "passwordHash": "Rohan",
+    "role": "customer",
+    "phone": "8830615390",
+    "address": "Sonal nagar near railway station jalna",
+    "createdAt": "2026-09-16T06:06:17.184Z"
+  },
+  {
+    "id": "user-1789590739581",
+    "name": "Attacker",
+    "email": "hacker_1789590739581@example.com",
+    "passwordHash": "password123",
+    "role": "customer",
+    "phone": "",
+    "address": "",
+    "createdAt": "2026-09-16T20:32:19.584Z"
+  },
+  {
+    "id": "user-1789590773838",
+    "name": "Attacker",
+    "email": "hacker_1789590773837@example.com",
+    "passwordHash": "password123",
+    "role": "customer",
+    "phone": "",
+    "address": "",
+    "createdAt": "2026-09-16T20:32:53.838Z"
   }
 ]

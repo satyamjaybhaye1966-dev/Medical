@@ -63,13 +63,20 @@ export const StoreProvider = ({ children }) => {
 
   // Quick Toast Alerts
   const [toasts, setToasts] = useState([]);
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
 
-  const showToast = (message, type = 'success') => {
+  const showToast = (message, type = 'success', action = null) => {
     const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
+    setToasts(prev => [...prev, { id, message, type, action }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 3500);
+    }, 4500);
+  };
+
+  const navigateToCatalogWithSearch = (query = '') => {
+    setCatalogSearchQuery(query);
+    setActiveTab('catalog');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Sync with LocalStorage
@@ -151,10 +158,16 @@ export const StoreProvider = ({ children }) => {
       const existing = prev.find(item => item.id === medicine.id);
       if (existing) {
         const newQty = Math.min(existing.quantity + quantity, medicine.stock);
-        showToast(`Updated ${medicine.name} quantity in cart (${newQty})`);
+        showToast(`Updated ${medicine.name} in cart (${newQty})`, 'success', {
+          label: 'View Cart',
+          onClick: () => setIsCartOpen(true)
+        });
         return prev.map(item => item.id === medicine.id ? { ...item, quantity: newQty } : item);
       } else {
-        showToast(`Added ${medicine.name} to Cart`);
+        showToast(`Added ${medicine.name} to Cart`, 'success', {
+          label: 'View Cart',
+          onClick: () => setIsCartOpen(true)
+        });
         return [...prev, { ...medicine, quantity: Math.min(quantity, medicine.stock) }];
       }
     });
@@ -237,6 +250,11 @@ export const StoreProvider = ({ children }) => {
 
   // Update Order Status (Admin/Staff)
   const updateOrderStatus = async (orderId, newStatus, notes = '') => {
+    if (currentUser.role !== 'admin') {
+      showToast('Permission Denied: Only Admin can update order status.', 'error');
+      return;
+    }
+
     setOrders(prev => prev.map(order => {
       if (order.id === orderId) {
         return { ...order, status: newStatus, notes: notes || order.notes };
@@ -246,9 +264,13 @@ export const StoreProvider = ({ children }) => {
     showToast(`Order #${orderId} status updated to ${newStatus}`);
 
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {})
+      };
       await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status: newStatus, notes })
       });
     } catch {
@@ -256,21 +278,36 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
-  // Add / Update Stock
+  // Add / Update Stock (Admin Only)
   const saveMedicine = async (medicineData) => {
-    let updated;
+    if (currentUser.role !== 'admin') {
+      showToast('Permission Denied: Only Admin can add or edit medicines.', 'error');
+      return { success: false, error: 'Unauthorized: Admin privileges required' };
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {})
+    };
+
     if (medicineData.id) {
       // Edit existing
-      updated = medicines.map(m => m.id === medicineData.id ? { ...m, ...medicineData } : m);
+      let updated = medicines.map(m => m.id === medicineData.id ? { ...m, ...medicineData } : m);
       setMedicines(updated);
       showToast(`Updated medicine ${medicineData.name}`);
       try {
-        await fetch(`/api/medicines/${medicineData.id}`, {
+        const res = await fetch(`/api/medicines/${medicineData.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(medicineData)
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.error || 'Failed to update medicine on server', 'error');
+          return { success: false, error: errData.error };
+        }
       } catch {}
+      return { success: true };
     } else {
       // Add new
       const newMed = {
@@ -282,21 +319,41 @@ export const StoreProvider = ({ children }) => {
       setMedicines(prev => [newMed, ...prev]);
       showToast(`Added new medicine: ${newMed.name}`);
       try {
-        await fetch('/api/medicines', {
+        const res = await fetch('/api/medicines', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(newMed)
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.error || 'Failed to add medicine on server', 'error');
+          return { success: false, error: errData.error };
+        }
       } catch {}
+      return { success: true };
     }
   };
 
   const deleteMedicine = async (id) => {
+    if (currentUser.role !== 'admin') {
+      showToast('Permission Denied: Only Admin can delete medicines.', 'error');
+      return { success: false, error: 'Unauthorized: Admin privileges required' };
+    }
+
     setMedicines(prev => prev.filter(m => m.id !== id));
     showToast('Medicine removed from inventory', 'info');
     try {
-      await fetch(`/api/medicines/${id}`, { method: 'DELETE' });
+      const headers = {
+        ...(currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {})
+      };
+      const res = await fetch(`/api/medicines/${id}`, { method: 'DELETE', headers });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to delete medicine on server', 'error');
+        return { success: false, error: errData.error };
+      }
     } catch {}
+    return { success: true };
   };
 
   // Customer Requirement submit
@@ -346,25 +403,76 @@ export const StoreProvider = ({ children }) => {
     return `https://wa.me/${STORE_DETAILS.whatsappNumber}?text=${encodeURIComponent(text)}`;
   };
 
-  // Auth Operations
-  const loginUser = async (email, password) => {
+  // Dedicated Admin Login
+  const loginAdmin = async (email, password) => {
     const cleanEmail = (email || '').trim().toLowerCase();
 
-    // 1. Try Backend API
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail, password })
       });
       const data = await res.json();
       if (res.ok && data.user) {
-        const authenticatedUser = { ...data.user, isLoggedIn: true };
+        const adminUser = { ...data.user, token: data.token, isLoggedIn: true };
+        setCurrentUser(adminUser);
+        localStorage.setItem('mante_user', JSON.stringify(adminUser));
+        setActiveTab('stock'); // Redirect Admin to Admin Dashboard
+        showToast(`Welcome Administrator, ${adminUser.name}!`, 'success');
+        return { success: true, user: adminUser };
+      } else {
+        showToast(data.error || 'Admin login failed.', 'error');
+        return { success: false, error: data.error || 'Admin login failed.' };
+      }
+    } catch {
+      // Offline fallback
+      if (cleanEmail === 'admin@gurumedical.com' && password === 'admin123') {
+        const adminUser = {
+          id: 'user-admin-1',
+          name: 'MR. Rushikesh Suresh Mante',
+          email: 'admin@gurumedical.com',
+          role: 'admin',
+          phone: '8237729148',
+          address: 'Guru Medical Store, Sawkhed Tejan, Sindkhed Raja, Buldhana',
+          token: 'user-admin-1:admin:offline',
+          isLoggedIn: true
+        };
+        setCurrentUser(adminUser);
+        localStorage.setItem('mante_user', JSON.stringify(adminUser));
+        setActiveTab('stock');
+        showToast(`Welcome Administrator, ${adminUser.name}!`, 'success');
+        return { success: true, user: adminUser };
+      }
+      showToast('Admin authentication failed.', 'error');
+      return { success: false, error: 'Admin authentication failed.' };
+    }
+  };
+
+  // Dedicated User / Customer Login
+  const loginUser = async (email, password) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    // 1. Try Backend API
+    try {
+      const res = await fetch('/api/auth/user-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        const authenticatedUser = { ...data.user, token: data.token, isLoggedIn: true };
         setCurrentUser(authenticatedUser);
         localStorage.setItem('mante_user', JSON.stringify(authenticatedUser));
+        if (authenticatedUser.role === 'admin') {
+          setActiveTab('stock');
+        } else {
+          setActiveTab('catalog'); // Redirect regular User to Medicine Catalog
+        }
         showToast(`Welcome back, ${authenticatedUser.name}!`, 'success');
         return { success: true, user: authenticatedUser };
-      } else if (res.status === 401 || res.status === 400 || res.status === 409) {
+      } else if (res.status === 401 || res.status === 400 || res.status === 403) {
         showToast(data.error || 'Invalid email or password', 'error');
         return { success: false, error: data.error || 'Invalid credentials' };
       }
@@ -401,9 +509,14 @@ export const StoreProvider = ({ children }) => {
     if (match) {
       if (match.password === password || match.passwordHash === password) {
         const { password: _, passwordHash: __, ...safeUser } = match;
-        const authenticatedUser = { ...safeUser, isLoggedIn: true };
+        const authenticatedUser = { ...safeUser, token: `${match.id}:${match.role}:offline`, isLoggedIn: true };
         setCurrentUser(authenticatedUser);
         localStorage.setItem('mante_user', JSON.stringify(authenticatedUser));
+        if (authenticatedUser.role === 'admin') {
+          setActiveTab('stock');
+        } else {
+          setActiveTab('catalog');
+        }
         showToast(`Welcome back, ${authenticatedUser.name}!`, 'success');
         return { success: true, user: authenticatedUser };
       } else {
@@ -424,13 +537,14 @@ export const StoreProvider = ({ children }) => {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...userData, email: cleanEmail })
+        body: JSON.stringify({ ...userData, email: cleanEmail, role: 'customer' })
       });
       const data = await res.json();
       if (res.ok && data.user) {
-        const registeredUser = { ...data.user, isLoggedIn: true };
+        const registeredUser = { ...data.user, token: data.token, isLoggedIn: true };
         setCurrentUser(registeredUser);
         localStorage.setItem('mante_user', JSON.stringify(registeredUser));
+        setActiveTab('catalog'); // Redirect to Medicine Catalog after registration
         showToast(`Account created successfully for ${registeredUser.name}!`, 'success');
         return { success: true, user: registeredUser };
       } else if (res.status === 409 || res.status === 400) {
@@ -453,7 +567,7 @@ export const StoreProvider = ({ children }) => {
       name: userData.name || 'Customer',
       email: cleanEmail,
       password: userData.password,
-      role: userData.role || 'customer',
+      role: 'customer',
       phone: userData.phone || '',
       address: userData.address || 'Sawkhed Tejan',
       createdAt: new Date().toISOString()
@@ -463,9 +577,10 @@ export const StoreProvider = ({ children }) => {
     localStorage.setItem('mante_registered_users', JSON.stringify(localUsers));
 
     const { password: _, ...safeUser } = newUser;
-    const registeredUser = { ...safeUser, isLoggedIn: true };
+    const registeredUser = { ...safeUser, token: `${newUser.id}:customer:offline`, isLoggedIn: true };
     setCurrentUser(registeredUser);
     localStorage.setItem('mante_user', JSON.stringify(registeredUser));
+    setActiveTab('catalog');
     showToast(`Account created successfully for ${registeredUser.name}!`, 'success');
     return { success: true, user: registeredUser };
   };
@@ -477,9 +592,12 @@ export const StoreProvider = ({ children }) => {
       email: '',
       address: '',
       role: 'customer',
+      token: null,
       isLoggedIn: false
     };
     setCurrentUser(guestUser);
+    localStorage.removeItem('mante_user');
+    setActiveTab('home');
     showToast('You have been logged out.');
   };
 
@@ -525,6 +643,7 @@ export const StoreProvider = ({ children }) => {
       updateRequirementStatus,
       currentUser,
       setCurrentUser,
+      loginAdmin,
       loginUser,
       registerUser,
       logoutUser,
@@ -540,16 +659,31 @@ export const StoreProvider = ({ children }) => {
       setAuthModalMode,
       openAuthModal,
       showToast,
-      getWhatsAppOrderUrl
+      getWhatsAppOrderUrl,
+      catalogSearchQuery,
+      setCatalogSearchQuery,
+      navigateToCatalogWithSearch
     }}>
       {children}
 
-      {/* Global Toast Render */}
+      {/* Global Toast Render with Action Button */}
       <div className="toast-container no-print">
         {toasts.map(toast => (
           <div key={toast.id} className={`toast toast-${toast.type}`}>
-            <span>{toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}</span>
-            <span>{toast.message}</span>
+            <span className="toast-icon">{toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}</span>
+            <span className="toast-message">{toast.message}</span>
+            {toast.action && (
+              <button
+                className="toast-action-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast.action.onClick();
+                  setToasts(prev => prev.filter(t => t.id !== toast.id));
+                }}
+              >
+                {toast.action.label} ➔
+              </button>
+            )}
           </div>
         ))}
       </div>

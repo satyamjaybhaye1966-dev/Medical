@@ -19,8 +19,10 @@ import {
   LogIn,
   UserPlus,
   Lock,
+  LogOut,
   CheckCircle2
 } from 'lucide-react';
+import { GlobalSearchBar } from './GlobalSearchBar';
 
 export const Navbar = () => {
   const {
@@ -32,7 +34,7 @@ export const Navbar = () => {
     cartItemCount,
     setIsCartOpen,
     currentUser,
-    setCurrentUser,
+    logoutUser,
     getWhatsAppOrderUrl,
     openAuthModal,
     dbStatus
@@ -44,14 +46,6 @@ export const Navbar = () => {
     setActiveTab(tabKey);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const toggleAdminRole = () => {
-    setCurrentUser(prev => ({
-      ...prev,
-      role: prev.role === 'admin' ? 'customer' : 'admin',
-      name: prev.role === 'admin' ? 'Satyam Jaybhaye' : 'MR. Rushikesh Suresh Mante'
-    }));
   };
 
   return (
@@ -71,26 +65,74 @@ export const Navbar = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-            {/* Quick Login / Register Shortcut in Top Bar */}
-            <button
-              onClick={() => openAuthModal('login')}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
-                borderRadius: 'var(--radius-full)',
-                color: '#ffffff',
-                padding: '0.2rem 0.65rem',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                cursor: 'pointer'
-              }}
-            >
-              <LogIn size={12} />
-              <span>Login / Register</span>
-            </button>
+            {/* Separated User / Admin Login in Top Ribbon */}
+            {!currentUser.isLoggedIn ? (
+              <>
+                <button
+                  onClick={() => openAuthModal('user-login')}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: 'var(--radius-full)',
+                    color: '#ffffff',
+                    padding: '0.2rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer'
+                  }}
+                  title="Customer Login / Register"
+                >
+                  <User size={12} />
+                  <span>User Login</span>
+                </button>
+
+                <button
+                  onClick={() => openAuthModal('admin-login')}
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.25)',
+                    border: '1px solid #fbbf24',
+                    borderRadius: 'var(--radius-full)',
+                    color: '#fef08a',
+                    padding: '0.2rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer'
+                  }}
+                  title="Store Administrator Portal"
+                >
+                  <Lock size={12} />
+                  <span>Admin Login</span>
+                </button>
+              </>
+            ) : (
+              <span style={{ fontSize: '0.76rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>Signed in as: <strong>{currentUser.name}</strong> ({currentUser.role === 'admin' ? 'Admin' : 'User'})</span>
+                <button
+                  onClick={logoutUser}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.3)',
+                    border: '1px solid #f87171',
+                    borderRadius: 'var(--radius-full)',
+                    color: '#fff',
+                    padding: '0.15rem 0.5rem',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  <LogOut size={11} />
+                  <span>Logout</span>
+                </button>
+              </span>
+            )}
 
             <a
               href={`tel:${storeDetails.contactNumber}`}
@@ -130,6 +172,9 @@ export const Navbar = () => {
             </div>
           </div>
 
+          {/* Global Universal Search Bar */}
+          <GlobalSearchBar />
+
           {/* Nav Links */}
           <div className="nav-links">
             <button
@@ -162,21 +207,28 @@ export const Navbar = () => {
               Services
             </button>
 
-            <button
-              className={`nav-btn ${activeTab === 'stock' ? 'active' : ''}`}
-              onClick={() => handleNavClick('stock')}
-            >
-              <ClipboardList size={16} />
-              Stock & Report
-            </button>
+            {/* Admin-only Navigation Controls */}
+            {currentUser.role === 'admin' && (
+              <>
+                <button
+                  className={`nav-btn ${activeTab === 'stock' ? 'active' : ''}`}
+                  onClick={() => handleNavClick('stock')}
+                  style={{ fontWeight: 700, color: 'var(--primary-dark)' }}
+                >
+                  <ClipboardList size={16} />
+                  Stock & Report (Admin)
+                </button>
 
-            <button
-              className={`nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => handleNavClick('orders')}
-            >
-              <ShoppingBag size={16} />
-              Daily & Pending Orders
-            </button>
+                <button
+                  className={`nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
+                  onClick={() => handleNavClick('orders')}
+                  style={{ fontWeight: 700, color: 'var(--primary-dark)' }}
+                >
+                  <ShoppingBag size={16} />
+                  Orders Management (Admin)
+                </button>
+              </>
+            )}
 
             <button
               className={`nav-btn ${activeTab === 'owner' ? 'active' : ''}`}
@@ -189,52 +241,133 @@ export const Navbar = () => {
 
           {/* Right Action Controls */}
           <div className="nav-actions">
-            {/* Direct Login & Register Action Buttons */}
-            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={() => openAuthModal('login')}
-                style={{
-                  fontSize: '0.8rem',
-                  padding: '0.4rem 0.8rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-                title="Sign in with Email & Password"
-              >
-                <LogIn size={14} />
-                <span>Sign In</span>
-              </button>
+            {!currentUser.isLoggedIn ? (
+              /* Not logged in: Separate User & Admin Login */
+              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={() => openAuthModal('user-login')}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.4rem 0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                  title="User / Customer Login"
+                >
+                  <LogIn size={14} />
+                  <span>User Login</span>
+                </button>
 
-              <button
-                className="btn btn-sm btn-secondary"
-                onClick={() => openAuthModal('register')}
-                style={{
-                  fontSize: '0.8rem',
-                  padding: '0.4rem 0.8rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem'
-                }}
-                title="Create a New Account"
-              >
-                <UserPlus size={14} />
-                <span>Register</span>
-              </button>
-            </div>
+                <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => openAuthModal('user-register')}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.4rem 0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="Register Customer Account"
+                >
+                  <UserPlus size={14} />
+                  <span>Register</span>
+                </button>
 
-            {/* Quick Role Switcher Button */}
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={toggleAdminRole}
-              title="Switch view between Customer and Store Owner mode"
-              style={{ fontSize: '0.78rem', padding: '0.35rem 0.65rem' }}
-            >
-              <ShieldCheck size={14} color={currentUser.role === 'admin' ? 'var(--primary)' : 'var(--text-muted)'} />
-              <span>{currentUser.role === 'admin' ? 'Owner Mode' : 'Customer'}</span>
-            </button>
+                <button
+                  className="btn btn-sm"
+                  onClick={() => openAuthModal('admin-login')}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.4rem 0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    border: '1.5px solid #d97706',
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    color: '#b45309',
+                    fontWeight: 700
+                  }}
+                  title="Administrator Portal Sign In"
+                >
+                  <Lock size={14} />
+                  <span>Admin Login</span>
+                </button>
+              </div>
+            ) : currentUser.role === 'admin' ? (
+              /* Admin is logged in: Admin Controls */
+              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={() => handleNavClick('stock')}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.4rem 0.8rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="Go to Admin Dashboard"
+                >
+                  <ShieldCheck size={14} />
+                  <span>Admin Dashboard</span>
+                </button>
+
+                <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={logoutUser}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.4rem 0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="Log out from Admin account"
+                >
+                  <LogOut size={14} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              /* User is logged in: Customer Controls */
+              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => handleNavClick('profile')}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.4rem 0.8rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="My Profile & Orders"
+                >
+                  <User size={14} />
+                  <span>{currentUser.name ? currentUser.name.split(' ')[0] : 'My Account'}</span>
+                </button>
+
+                <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={logoutUser}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.4rem 0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="Sign out"
+                >
+                  <LogOut size={14} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
 
             {/* Dark / Light Toggle */}
             <button
@@ -285,20 +418,43 @@ export const Navbar = () => {
             flexDirection: 'column',
             gap: '0.5rem'
           }}>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => { openAuthModal('login'); setMobileMenuOpen(false); }}>
-                <LogIn size={14} /> Sign In
-              </button>
-              <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => { openAuthModal('register'); setMobileMenuOpen(false); }}>
-                <UserPlus size={14} /> Register
-              </button>
-            </div>
+            {!currentUser.isLoggedIn ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => { openAuthModal('user-login'); setMobileMenuOpen(false); }}>
+                    <LogIn size={14} /> User Login
+                  </button>
+                  <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => { openAuthModal('user-register'); setMobileMenuOpen(false); }}>
+                    <UserPlus size={14} /> Register
+                  </button>
+                </div>
+                <button
+                  className="btn btn-sm"
+                  style={{ border: '1.5px solid #d97706', background: 'rgba(245, 158, 11, 0.1)', color: '#b45309', fontWeight: 700 }}
+                  onClick={() => { openAuthModal('admin-login'); setMobileMenuOpen(false); }}
+                >
+                  <Lock size={14} /> Admin Portal Login
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', padding: '0.5rem', background: 'var(--bg-page)', borderRadius: 'var(--radius-md)' }}>
+                <span>Logged in: <strong>{currentUser.name}</strong></span>
+                <button className="btn btn-sm btn-secondary" onClick={() => { logoutUser(); setMobileMenuOpen(false); }}>
+                  <LogOut size={13} /> Logout
+                </button>
+              </div>
+            )}
+
             <button className="nav-btn" onClick={() => handleNavClick('home')}>Home</button>
             <button className="nav-btn" onClick={() => handleNavClick('catalog')}>Medicines & Prices</button>
             <button className="nav-btn" onClick={() => handleNavClick('customer-req')}>Customer Requirements</button>
             <button className="nav-btn" onClick={() => handleNavClick('services')}>Services</button>
-            <button className="nav-btn" onClick={() => handleNavClick('stock')}>Stock & Report</button>
-            <button className="nav-btn" onClick={() => handleNavClick('orders')}>Daily & Pending Orders</button>
+            {currentUser.role === 'admin' && (
+              <>
+                <button className="nav-btn" onClick={() => handleNavClick('stock')}>Stock & Report (Admin)</button>
+                <button className="nav-btn" onClick={() => handleNavClick('orders')}>Daily & Pending Orders (Admin)</button>
+              </>
+            )}
             <button className="nav-btn" onClick={() => handleNavClick('owner')}>Owner Page</button>
             <button className="nav-btn" onClick={() => handleNavClick('profile')}>User Profile</button>
           </div>

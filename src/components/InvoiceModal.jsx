@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
-import { X, Printer, Pill, MapPin, Phone, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, Printer, Pill, MapPin, Phone, ShieldCheck, CheckCircle2, QrCode, Smartphone, Copy, Check } from 'lucide-react';
 
 export const InvoiceModal = () => {
   const { activeInvoiceOrder, setActiveInvoiceOrder, storeDetails } = useStore();
+  const [copiedField, setCopiedField] = useState(null);
 
   if (!activeInvoiceOrder) return null;
 
@@ -13,6 +14,14 @@ export const InvoiceModal = () => {
 
   const calculateSubtotal = () => {
     return activeInvoiceOrder.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  };
+
+  const handleCopy = (text, field) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    }
   };
 
   return (
@@ -153,6 +162,167 @@ export const InvoiceModal = () => {
                 <span>Net Payable:</span>
                 <span>₹{activeInvoiceOrder.totalAmount.toFixed(2)}</span>
               </div>
+            </div>
+          </div>
+
+          {/* UPI Payment Details Section - Appears ONLY after medicine bill total amount */}
+          <div style={{
+            marginTop: '1.5rem',
+            padding: '1rem 1.25rem',
+            background: '#f8fafc',
+            border: '1.5px solid #e2e8f0',
+            borderRadius: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+              borderBottom: '1px solid #e2e8f0',
+              paddingBottom: '0.6rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '6px',
+                  background: '#047857',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <QrCode size={16} />
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#0f172a' }}>
+                    Payment Details
+                  </span>
+                  <span style={{ fontSize: '0.76rem', color: '#64748b', marginLeft: '0.5rem' }}>
+                    (Pay via GPay, PhonePe, Paytm, BHIM)
+                  </span>
+                </div>
+              </div>
+
+              <span style={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                background: '#ecfdf5',
+                color: '#047857',
+                padding: '0.2rem 0.55rem',
+                borderRadius: '4px',
+                border: '1px solid #a7f3d0'
+              }}>
+                Direct Pharmacist UPI
+              </span>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '0.75rem',
+              fontSize: '0.86rem'
+            }}>
+              <div style={{
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
+                    UPI ID
+                  </div>
+                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem' }}>
+                    8237729148@upi
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="no-print"
+                  onClick={() => handleCopy('8237729148@upi', 'upi')}
+                  style={{
+                    border: 'none',
+                    background: copiedField === 'upi' ? '#ecfdf5' : '#f1f5f9',
+                    color: copiedField === 'upi' ? '#047857' : '#475569',
+                    padding: '0.3rem 0.6rem',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                  title="Copy UPI ID"
+                >
+                  {copiedField === 'upi' ? <Check size={13} /> : <Copy size={13} />}
+                  <span>{copiedField === 'upi' ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+
+              <div style={{
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
+                    UPI Connected Mobile Number
+                  </div>
+                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem' }}>
+                    [8237729148]
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="no-print"
+                  onClick={() => handleCopy('8237729148', 'phone')}
+                  style={{
+                    border: 'none',
+                    background: copiedField === 'phone' ? '#ecfdf5' : '#f1f5f9',
+                    color: copiedField === 'phone' ? '#047857' : '#475569',
+                    padding: '0.3rem 0.6rem',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                  title="Copy Mobile Number"
+                >
+                  {copiedField === 'phone' ? <Check size={13} /> : <Copy size={13} />}
+                  <span>{copiedField === 'phone' ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div style={{
+              fontSize: '0.78rem',
+              color: '#475569',
+              lineHeight: 1.4,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              marginTop: '0.1rem',
+              paddingTop: '0.4rem',
+              borderTop: '1px dashed #e2e8f0'
+            }}>
+              <Smartphone size={14} style={{ color: '#047857', flexShrink: 0 }} />
+              <span>
+                <strong>UPI Connected Mobile Number: [8237729148]</strong> — Pay the exact total amount (<strong>₹{activeInvoiceOrder.totalAmount.toFixed(2)}</strong>) directly using any UPI app to confirm medicine dispatch.
+              </span>
             </div>
           </div>
 

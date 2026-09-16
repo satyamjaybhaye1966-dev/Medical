@@ -17,9 +17,15 @@ import {
 } from 'lucide-react';
 
 export const CatalogPage = () => {
-  const { medicines, setActiveTab, setIsPrescriptionModalOpen, addToCart } = useStore();
+  const { medicines, setActiveTab, setIsPrescriptionModalOpen, addToCart, catalogSearchQuery, setCatalogSearchQuery } = useStore();
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(catalogSearchQuery || '');
+
+  React.useEffect(() => {
+    if (catalogSearchQuery !== undefined) {
+      setSearch(catalogSearchQuery);
+    }
+  }, [catalogSearchQuery]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [rxFilter, setRxFilter] = useState('all'); // all, rx, otc
@@ -106,7 +112,10 @@ export const CatalogPage = () => {
               style={{ paddingLeft: '2.75rem' }}
               placeholder="Search medicine brand or generic composition..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => {
+                setSearch(e.target.value);
+                setCatalogSearchQuery(e.target.value);
+              }}
             />
           </div>
 

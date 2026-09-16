@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import { pool, initializeDatabase, getPostgresStatus } from './db.js';
 
 dotenv.config();
@@ -228,6 +229,111 @@ if (!fs.existsSync(USERS_FILE)) writeData(USERS_FILE, initialUsers);
 initializeDatabase(initialMedicines, initialOrders, initialRequirements);
 
 // -------------------------------------------------------------
+// TOKEN & ROLE-BASED AUTHENTICATION MIDDLEWARE
+// -------------------------------------------------------------
+const JWT_SECRET = process.env.JWT_SECRET || 'guru_medical_secure_rbac_secret_2026';
+
+const generateAuthToken = (user) => {
+  const timestamp = Date.now();
+  const payload = `${user.id}:${user.role}:${timestamp}`;
+  const signature = crypto.createHmac('sha256', JWT_SECRET).update(payload).digest('hex');
+  return `${payload}:${signature}`;
+};
+
+const verifyAuthToken = async (token) => {
+  if (!token) return null;
+  const cleanToken = token.startsWith('Bearer ') ? token.slice(7).trim() : token.trim();
+  const parts = cleanToken.split(':');
+  if (parts.length !== 4) return null;
+
+  const [userId, role, timestampStr, signature] = parts;
+  const payload = `${userId}:${role}:${timestampStr}`;
+  const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(payload).digest('hex');
+
+  // Verify HMAC signature
+  if (signature !== expectedSig) {
+    return null;
+  }
+
+  // Verify expiry (30 days)
+  const tokenTime = Number(timestampStr);
+  if (isNaN(tokenTime) || Date.now() - tokenTime > 30 * 24 * 60 * 60 * 1000) {
+    return null;
+  }
+
+  // Cross-verify with PostgreSQL database (or fallback JSON) to ensure role was not spoofed
+  try {
+    if (getPostgresStatus().connected) {
+      const result = await pool.query(
+        'SELECT id, name, email, role, phone, address FROM users WHERE id = $1',
+        [userId]
+      );
+      if (result.rows.length > 0) {
+        return result.rows[0];
+      }
+    }
+  } catch (err) {
+    console.error('Database role verification error:', err.message);
+  }
+
+  // Fallback JSON check
+  const users = readData(USERS_FILE, initialUsers);
+  const found = users.find(u => u.id === userId);
+  if (found) {
+    const { passwordHash: _, ...safeUser } = found;
+    return safeUser;
+  }
+
+  return null;
+};
+
+const authenticateUser = async (req, res, next) => {
+  const authHeader = req.headers.authorization || req.headers['x-auth-token'];
+  if (!authHeader) {
+    return res.status(401).json({
+      error: 'Authentication required. Please provide a valid Authorization header.'
+    });
+  }
+
+  const user = await verifyAuthToken(authHeader);
+  if (!user) {
+    return res.status(401).json({
+      error: 'Invalid or expired session token. Please log in again.'
+    });
+  }
+
+  req.user = user;
+  next();
+};
+
+const requireAdmin = async (req, res, next) => {
+  const authHeader = req.headers.authorization || req.headers['x-auth-token'];
+  if (!authHeader) {
+    return res.status(401).json({
+      error: 'Authentication required. Administrator credentials required.'
+    });
+  }
+
+  const user = await verifyAuthToken(authHeader);
+  if (!user) {
+    return res.status(401).json({
+      error: 'Invalid or expired session token. Please log in again as Admin.'
+    });
+  }
+
+  if (user.role !== 'admin') {
+    return res.status(403).json({
+      error: 'Access denied. Administrator privileges required to perform this action.',
+      requiredRole: 'admin',
+      userRole: user.role
+    });
+  }
+
+  req.user = user;
+  next();
+};
+
+// -------------------------------------------------------------
 // REST API ROUTES
 // -------------------------------------------------------------
 
@@ -313,8 +419,8 @@ app.get('/api/medicines', async (req, res) => {
   res.json(filtered);
 });
 
-// POST new medicine
-app.post('/api/medicines', async (req, res) => {
+// POST new medicine (Admin Only)
+app.post('/api/medicines', requireAdmin, async (req, res) => {
   const newMed = {
     id: `med-${Date.now()}`,
     name: req.body.name || 'Unnamed Medicine',
@@ -357,8 +463,8 @@ app.post('/api/medicines', async (req, res) => {
   res.status(201).json(newMed);
 });
 
-// PUT update medicine & stock
-app.put('/api/medicines/:id', async (req, res) => {
+// PUT update medicine & stock (Admin Only)
+app.put('/api/medicines/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
 
@@ -414,8 +520,8 @@ app.put('/api/medicines/:id', async (req, res) => {
   res.json({ id, ...updateData });
 });
 
-// DELETE medicine
-app.delete('/api/medicines/:id', async (req, res) => {
+// DELETE medicine (Admin Only)
+app.delete('/api/medicines/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -433,8 +539,8 @@ app.delete('/api/medicines/:id', async (req, res) => {
   res.json({ message: 'Medicine deleted successfully' });
 });
 
-// GET stock report summary
-app.get('/api/stock-report', async (req, res) => {
+// GET stock report summary (Admin Only)
+app.get('/api/stock-report', requireAdmin, async (req, res) => {
   let medicines = readData(MEDICINES_FILE, initialMedicines);
   try {
     if (getPostgresStatus().connected) {
@@ -551,8 +657,8 @@ app.post('/api/orders', async (req, res) => {
   res.status(201).json(newOrder);
 });
 
-// PUT update order status
-app.put('/api/orders/:id/status', async (req, res) => {
+// PUT update order status (Admin Only)
+app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { status, notes } = req.body;
 
@@ -668,9 +774,10 @@ app.put('/api/requirements/:id', async (req, res) => {
 // USER AUTHENTICATION & CREDENTIALS ROUTES
 // -------------------------------------------------------------
 
-// POST Register New User
+// POST Register New User (Customers only)
 app.post('/api/auth/register', async (req, res) => {
-  const { name, email, password, role = 'customer', phone = '', address = '' } = req.body;
+  const { name, email, password, phone = '', address = '' } = req.body;
+  const role = 'customer'; // Enforce customer role strictly to prevent unauthorized admin creation
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -692,6 +799,9 @@ app.post('/api/auth/register', async (req, res) => {
         RETURNING id, name, email, role, phone, address, created_at AS "createdAt"
       `, [userId, name.trim(), normalizedEmail, password, role, phone, address]);
 
+      const safeUser = insertResult.rows[0];
+      const token = generateAuthToken(safeUser);
+
       // Also mirror to JSON fallback
       const users = readData(USERS_FILE, initialUsers);
       users.push({
@@ -708,8 +818,8 @@ app.post('/api/auth/register', async (req, res) => {
 
       return res.status(201).json({
         message: 'Account registered successfully!',
-        user: insertResult.rows[0],
-        token: `jwt_mock_${userId}_${Date.now()}`
+        user: safeUser,
+        token
       });
     }
   } catch (err) {
@@ -737,14 +847,149 @@ app.post('/api/auth/register', async (req, res) => {
   writeData(USERS_FILE, users);
 
   const { passwordHash: _, ...safeUser } = newUser;
+  const token = generateAuthToken(safeUser);
   res.status(201).json({
     message: 'Account registered successfully!',
     user: safeUser,
-    token: `jwt_mock_${newUser.id}_${Date.now()}`
+    token
   });
 });
 
-// POST User Login
+// POST Dedicated Admin Login
+app.post('/api/auth/admin-login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Admin email and password are required.' });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  try {
+    if (getPostgresStatus().connected) {
+      const result = await pool.query(`
+        SELECT id, name, email, password_hash AS "passwordHash", role, phone, address, created_at AS "createdAt"
+        FROM users WHERE LOWER(email) = $1
+      `, [normalizedEmail]);
+
+      if (result.rows.length === 0) {
+        return res.status(401).json({ error: 'Invalid admin email or password.' });
+      }
+
+      const user = result.rows[0];
+      const storedPassword = user.passwordHash || user.password_hash || user.password;
+      if (storedPassword !== password) {
+        return res.status(401).json({ error: 'Invalid admin email or password.' });
+      }
+
+      if (user.role !== 'admin') {
+        return res.status(403).json({
+          error: 'Access denied. This account does not have administrator privileges. Please sign in via User Login.'
+        });
+      }
+
+      const { passwordHash: _, password_hash: __, ...safeUser } = user;
+      const token = generateAuthToken(safeUser);
+      return res.json({
+        message: 'Admin authentication successful!',
+        user: safeUser,
+        token
+      });
+    }
+  } catch (err) {
+    console.error('Postgres admin login error:', err.message);
+  }
+
+  // JSON Fallback
+  const users = readData(USERS_FILE, initialUsers);
+  const user = users.find(u => u.email.toLowerCase() === normalizedEmail);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid admin email or password.' });
+  }
+
+  const storedPassword = user.passwordHash || user.password_hash || user.password;
+  if (storedPassword !== password) {
+    return res.status(401).json({ error: 'Invalid admin email or password.' });
+  }
+
+  if (user.role !== 'admin') {
+    return res.status(403).json({
+      error: 'Access denied. This account does not have administrator privileges. Please sign in via User Login.'
+    });
+  }
+
+  const { passwordHash: _, password_hash: __, ...safeUser } = user;
+  const token = generateAuthToken(safeUser);
+  res.json({
+    message: 'Admin authentication successful!',
+    user: safeUser,
+    token
+  });
+});
+
+// POST Dedicated User Login (Customers)
+app.post('/api/auth/user-login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  try {
+    if (getPostgresStatus().connected) {
+      const result = await pool.query(`
+        SELECT id, name, email, password_hash AS "passwordHash", role, phone, address, created_at AS "createdAt"
+        FROM users WHERE LOWER(email) = $1
+      `, [normalizedEmail]);
+
+      if (result.rows.length === 0) {
+        return res.status(401).json({ error: 'Invalid email or password.' });
+      }
+
+      const user = result.rows[0];
+      const storedPassword = user.passwordHash || user.password_hash || user.password;
+      if (storedPassword !== password) {
+        return res.status(401).json({ error: 'Invalid email or password.' });
+      }
+
+      const { passwordHash: _, password_hash: __, ...safeUser } = user;
+      const token = generateAuthToken(safeUser);
+      return res.json({
+        message: 'Login successful!',
+        user: safeUser,
+        token
+      });
+    }
+  } catch (err) {
+    console.error('Postgres user login error:', err.message);
+  }
+
+  // JSON Fallback
+  const users = readData(USERS_FILE, initialUsers);
+  const user = users.find(u => u.email.toLowerCase() === normalizedEmail);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  const storedPassword = user.passwordHash || user.password_hash || user.password;
+  if (storedPassword !== password) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  const { passwordHash: _, password_hash: __, ...safeUser } = user;
+  const token = generateAuthToken(safeUser);
+  res.json({
+    message: 'Login successful!',
+    user: safeUser,
+    token
+  });
+});
+
+// POST General Login (Backward compatible)
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -772,10 +1017,11 @@ app.post('/api/auth/login', async (req, res) => {
       }
 
       const { passwordHash: _, password_hash: __, ...safeUser } = user;
+      const token = generateAuthToken(safeUser);
       return res.json({
         message: 'Login successful!',
         user: safeUser,
-        token: `jwt_mock_${user.id}_${Date.now()}`
+        token
       });
     }
   } catch (err) {
@@ -796,10 +1042,11 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const { passwordHash: _, password_hash: __, ...safeUser } = user;
+  const token = generateAuthToken(safeUser);
   res.json({
     message: 'Login successful!',
     user: safeUser,
-    token: `jwt_mock_${user.id}_${Date.now()}`
+    token
   });
 });
 

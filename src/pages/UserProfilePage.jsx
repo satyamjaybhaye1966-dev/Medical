@@ -16,11 +16,12 @@ import {
   KeyRound,
   LogIn,
   UserPlus,
-  Database,
   Lock,
   AlertCircle,
   Sparkles,
-  Server
+  Smartphone,
+  LayoutDashboard,
+  ArrowRight
 } from 'lucide-react';
 
 export const UserProfilePage = () => {
@@ -28,17 +29,18 @@ export const UserProfilePage = () => {
     currentUser,
     setCurrentUser,
     loginUser,
+    loginAdmin,
     registerUser,
     logoutUser,
     updateUserProfile,
-    dbStatus,
     orders,
     setActiveInvoiceOrder,
     setIsPrescriptionModalOpen,
+    setActiveTab,
     showToast
   } = useStore();
 
-  const [authMode, setAuthMode] = useState(currentUser.isLoggedIn ? 'profile' : 'login'); // 'profile', 'login', 'register'
+  const [authMode, setAuthMode] = useState(currentUser.isLoggedIn ? 'profile' : 'user-login'); // 'profile', 'user-login', 'user-register', 'admin-login'
   const [activeSubTab, setActiveSubTab] = useState('orders'); // 'orders', 'prescriptions'
   const [isEditing, setIsEditing] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -53,18 +55,23 @@ export const UserProfilePage = () => {
     address: currentUser.address || 'Sawkhed Tejan, Tq. Sindkhed Raja, Dist. Buldhana'
   });
 
-  // Login Form State
-  const [loginForm, setLoginForm] = useState({
+  // User/Customer Login Form State
+  const [userLoginForm, setUserLoginForm] = useState({
+    email: 'satyam@example.com',
+    password: 'customer123'
+  });
+
+  // Admin Login Form State
+  const [adminLoginForm, setAdminLoginForm] = useState({
     email: 'admin@gurumedical.com',
     password: 'admin123'
   });
 
-  // Register Form State
+  // Customer Register Form State (Strictly role: 'customer')
   const [registerForm, setRegisterForm] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'customer',
     phone: '',
     address: 'Sawkhed Tejan, Sindkhed Raja'
   });
@@ -77,18 +84,18 @@ export const UserProfilePage = () => {
     e.preventDefault();
     await updateUserProfile(profileForm);
     setIsEditing(false);
-    showToast('Profile updated in PostgreSQL / Storage successfully!');
+    showToast('Profile updated successfully!');
   };
 
-  const handleLoginSubmit = async (e) => {
+  const handleUserLoginSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
     setAuthSuccess('');
     setIsLoading(true);
-    const result = await loginUser(loginForm.email, loginForm.password);
+    const result = await loginUser(userLoginForm.email, userLoginForm.password);
     setIsLoading(false);
     if (result.success) {
-      setAuthSuccess(`Logged in successfully as ${result.user.name}!`);
+      setAuthSuccess(`Logged in successfully as customer: ${result.user.name}!`);
       setAuthMode('profile');
       setProfileForm({
         name: result.user.name || '',
@@ -97,7 +104,28 @@ export const UserProfilePage = () => {
         address: result.user.address || ''
       });
     } else {
-      setAuthError(result.error || 'Invalid email or password.');
+      setAuthError(result.error || 'Invalid customer email or password.');
+    }
+  };
+
+  const handleAdminLoginSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+    setIsLoading(true);
+    const result = await loginAdmin(adminLoginForm.email, adminLoginForm.password);
+    setIsLoading(false);
+    if (result.success) {
+      setAuthSuccess(`Administrator authenticated: ${result.user.name}. Redirecting to Admin Dashboard...`);
+      setAuthMode('profile');
+      setProfileForm({
+        name: result.user.name || '',
+        phone: result.user.phone || '',
+        email: result.user.email || '',
+        address: result.user.address || ''
+      });
+    } else {
+      setAuthError(result.error || 'Admin login failed. Please verify administrator credentials.');
     }
   };
 
@@ -106,7 +134,7 @@ export const UserProfilePage = () => {
     setAuthError('');
     setAuthSuccess('');
     setIsLoading(true);
-    const result = await registerUser(registerForm);
+    const result = await registerUser({ ...registerForm, role: 'customer' });
     setIsLoading(false);
     if (result.success) {
       setAuthSuccess(`Account created successfully! Welcome, ${result.user.name}!`);
@@ -122,15 +150,15 @@ export const UserProfilePage = () => {
     }
   };
 
-  const quickDemoLogin = async (email, password) => {
-    setLoginForm({ email, password });
+  const quickDemoUserLogin = async () => {
+    setUserLoginForm({ email: 'satyam@example.com', password: 'customer123' });
     setAuthError('');
     setAuthSuccess('');
     setIsLoading(true);
-    const result = await loginUser(email, password);
+    const result = await loginUser('satyam@example.com', 'customer123');
     setIsLoading(false);
     if (result.success) {
-      setAuthSuccess(`Logged in as ${result.user.name}!`);
+      setAuthSuccess(`Logged in as Customer: ${result.user.name}!`);
       setAuthMode('profile');
       setProfileForm({
         name: result.user.name || '',
@@ -139,7 +167,28 @@ export const UserProfilePage = () => {
         address: result.user.address || ''
       });
     } else {
-      setAuthError(result.error || 'Login failed.');
+      setAuthError(result.error || 'Customer login failed.');
+    }
+  };
+
+  const quickDemoAdminLogin = async () => {
+    setAdminLoginForm({ email: 'admin@gurumedical.com', password: 'admin123' });
+    setAuthError('');
+    setAuthSuccess('');
+    setIsLoading(true);
+    const result = await loginAdmin('admin@gurumedical.com', 'admin123');
+    setIsLoading(false);
+    if (result.success) {
+      setAuthSuccess(`Logged in as Administrator: ${result.user.name}!`);
+      setAuthMode('profile');
+      setProfileForm({
+        name: result.user.name || '',
+        phone: result.user.phone || '',
+        email: result.user.email || '',
+        address: result.user.address || ''
+      });
+    } else {
+      setAuthError(result.error || 'Admin login failed.');
     }
   };
 
@@ -147,61 +196,10 @@ export const UserProfilePage = () => {
     <div className="container" style={{ padding: '2.5rem 1.25rem' }}>
       {/* Header */}
       <div className="section-header" style={{ marginBottom: '1.75rem' }}>
-        <span className="section-tag">
-          <Database size={14} />
-          <span>PostgreSQL Auth & User Center</span>
-        </span>
         <h1 className="section-title">User Authentication & Account Profile</h1>
         <p className="section-desc">
-          Secure user authentication backed by PostgreSQL database. Login, manage credentials, and review orders.
+          Manage your account credentials, view order history, and access saved prescriptions.
         </p>
-      </div>
-
-      {/* Database Connection Banner */}
-      <div style={{
-        background: dbStatus.connected ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)',
-        border: `1.5px solid ${dbStatus.connected ? '#10b981' : '#3b82f6'}`,
-        borderRadius: 'var(--radius-lg)',
-        padding: '1.25rem 1.5rem',
-        marginBottom: '2rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Server size={22} color={dbStatus.connected ? '#10b981' : '#3b82f6'} />
-            <div>
-              <strong style={{ fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-                {dbStatus.connected ? '🐘 PostgreSQL Database: Connected & Synchronized' : '🐘 PostgreSQL Ready / Local Persistent Storage Active'}
-              </strong>
-              <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
-                Database: <code>guru_medical_db</code> • Table: <code>users</code> (Login credentials & Role-based authentication)
-              </div>
-            </div>
-          </div>
-
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '0.35rem 0.85rem',
-            borderRadius: 'var(--radius-full)',
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            background: dbStatus.connected ? '#10b981' : '#3b82f6',
-            color: '#fff'
-          }}>
-            <CheckCircle2 size={14} />
-            <span>{dbStatus.connected ? 'PostgreSQL Active' : 'Fallback Storage Active'}</span>
-          </span>
-        </div>
-
-        {!dbStatus.connected && (
-          <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', borderTop: '1px dashed var(--border-color)', paddingTop: '0.5rem', marginTop: '0.25rem' }}>
-            💡 <em>To connect your Mac's PostgreSQL instance:</em> Update <code>PGPASSWORD</code> in your root <code>.env</code> file with your PostgreSQL password, then run <code>npm run db:setup</code>.
-          </div>
-        )}
       </div>
 
       <div style={{
@@ -213,32 +211,47 @@ export const UserProfilePage = () => {
         {/* Left Column: Auth Card / Profile Card */}
         <div>
           {/* Auth Tab Toggle */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
             <button
               className={`btn btn-sm ${authMode === 'profile' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: '95px' }}
               onClick={() => { setAuthMode('profile'); setAuthError(''); setAuthSuccess(''); }}
             >
-              <User size={15} />
-              <span>Current Profile</span>
+              <User size={14} />
+              <span>Profile</span>
             </button>
 
             <button
-              className={`btn btn-sm ${authMode === 'login' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ flex: 1 }}
-              onClick={() => { setAuthMode('login'); setAuthError(''); setAuthSuccess(''); }}
+              className={`btn btn-sm ${authMode === 'user-login' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ flex: 1, minWidth: '105px' }}
+              onClick={() => { setAuthMode('user-login'); setAuthError(''); setAuthSuccess(''); }}
             >
-              <LogIn size={15} />
-              <span>Sign In</span>
+              <LogIn size={14} />
+              <span>User Sign In</span>
             </button>
 
             <button
-              className={`btn btn-sm ${authMode === 'register' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ flex: 1 }}
-              onClick={() => { setAuthMode('register'); setAuthError(''); setAuthSuccess(''); }}
+              className={`btn btn-sm ${authMode === 'user-register' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ flex: 1, minWidth: '95px' }}
+              onClick={() => { setAuthMode('user-register'); setAuthError(''); setAuthSuccess(''); }}
             >
-              <UserPlus size={15} />
+              <UserPlus size={14} />
               <span>Register</span>
+            </button>
+
+            <button
+              className={`btn btn-sm ${authMode === 'admin-login' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{
+                flex: 1,
+                minWidth: '110px',
+                background: authMode === 'admin-login' ? 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)' : undefined,
+                color: authMode === 'admin-login' ? '#fff' : undefined,
+                borderColor: authMode === 'admin-login' ? '#1d4ed8' : undefined
+              }}
+              onClick={() => { setAuthMode('admin-login'); setAuthError(''); setAuthSuccess(''); }}
+            >
+              <ShieldCheck size={14} />
+              <span>Admin Portal</span>
             </button>
           </div>
 
@@ -279,54 +292,44 @@ export const UserProfilePage = () => {
             </div>
           )}
 
-          {/* 1. SIGN IN FORM */}
-          {authMode === 'login' && (
+          {/* 1. USER / CUSTOMER SIGN IN FORM */}
+          {authMode === 'user-login' && (
             <div className="card" style={{ padding: '2rem', border: '1.5px solid var(--primary-glow)' }}>
               <div style={{ marginBottom: '1.5rem' }}>
                 <h3 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Lock size={18} color="var(--primary)" />
-                  <span>Account Login</span>
+                  <User size={18} color="var(--primary)" />
+                  <span>Customer Sign In</span>
                 </h3>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  Sign in with your email and password credentials.
+                  Sign in with your customer account to place orders, upload prescriptions, and view bills.
                 </p>
               </div>
 
-              {/* Quick Demo Login Badges */}
+              {/* Quick Demo Customer Account */}
               <div style={{ marginBottom: '1.5rem', background: 'var(--bg-page)', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                  ⚡ Quick Demo Accounts (PostgreSQL Pre-Seeded):
+                  ⚡ Quick Demo Customer Account:
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    style={{ fontSize: '0.78rem' }}
-                    onClick={() => quickDemoLogin('admin@gurumedical.com', 'admin123')}
-                  >
-                    👑 Store Owner (Admin)
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    style={{ fontSize: '0.78rem' }}
-                    onClick={() => quickDemoLogin('satyam@example.com', 'customer123')}
-                  >
-                    👤 Customer (Satyam)
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.8rem', width: '100%' }}
+                  onClick={quickDemoUserLogin}
+                >
+                  👤 Login as Customer (Satyam - satyam@example.com)
+                </button>
               </div>
 
-              <form onSubmit={handleLoginSubmit}>
+              <form onSubmit={handleUserLoginSubmit}>
                 <div className="form-group">
-                  <label className="form-label">Email Address</label>
+                  <label className="form-label">Customer Email Address</label>
                   <input
                     type="email"
                     required
                     className="form-input"
-                    placeholder="e.g. admin@gurumedical.com"
-                    value={loginForm.email}
-                    onChange={e => setLoginForm({ ...loginForm, email: e.target.value })}
+                    placeholder="e.g. satyam@example.com"
+                    value={userLoginForm.email}
+                    onChange={e => setUserLoginForm({ ...userLoginForm, email: e.target.value })}
                   />
                 </div>
 
@@ -336,9 +339,9 @@ export const UserProfilePage = () => {
                     type="password"
                     required
                     className="form-input"
-                    placeholder="Enter password"
-                    value={loginForm.password}
-                    onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
+                    placeholder="Enter customer password"
+                    value={userLoginForm.password}
+                    onChange={e => setUserLoginForm({ ...userLoginForm, password: e.target.value })}
                   />
                 </div>
 
@@ -349,22 +352,97 @@ export const UserProfilePage = () => {
                   disabled={isLoading}
                 >
                   <LogIn size={16} />
-                  <span>{isLoading ? 'Signing In...' : 'Sign In to Account'}</span>
+                  <span>{isLoading ? 'Signing In...' : 'Sign In as Customer'}</span>
                 </button>
               </form>
             </div>
           )}
 
-          {/* 2. REGISTRATION FORM */}
-          {authMode === 'register' && (
+          {/* 2. ADMIN PORTAL SIGN IN FORM */}
+          {authMode === 'admin-login' && (
+            <div className="card" style={{ padding: '2rem', border: '1.5px solid #2563eb', boxShadow: '0 4px 20px rgba(37, 99, 235, 0.12)' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>
+                  <ShieldCheck size={13} />
+                  <span>RESTRICTED ACCESS</span>
+                </div>
+                <h3 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e40af' }}>
+                  <Lock size={18} color="#2563eb" />
+                  <span>Admin Portal Sign In</span>
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Restricted to authorized store owners and administrators for inventory and orders management.
+                </p>
+              </div>
+
+              {/* Quick Demo Admin Account */}
+              <div style={{ marginBottom: '1.5rem', background: 'rgba(37, 99, 235, 0.05)', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: '#1e40af' }}>
+                  👑 Store Owner / Administrator:
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.8rem', width: '100%', borderColor: '#3b82f6', color: '#1d4ed8' }}
+                  onClick={quickDemoAdminLogin}
+                >
+                  ⚡ Fill & Login as Admin (admin@gurumedical.com)
+                </button>
+              </div>
+
+              <form onSubmit={handleAdminLoginSubmit}>
+                <div className="form-group">
+                  <label className="form-label">Administrator Email</label>
+                  <input
+                    type="email"
+                    required
+                    className="form-input"
+                    placeholder="e.g. admin@gurumedical.com"
+                    value={adminLoginForm.email}
+                    onChange={e => setAdminLoginForm({ ...adminLoginForm, email: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Admin Password</label>
+                  <input
+                    type="password"
+                    required
+                    className="form-input"
+                    placeholder="Enter admin password"
+                    value={adminLoginForm.password}
+                    onChange={e => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{
+                    width: '100%',
+                    marginTop: '0.5rem',
+                    background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
+                    borderColor: '#1d4ed8'
+                  }}
+                  disabled={isLoading}
+                >
+                  <ShieldCheck size={16} />
+                  <span>{isLoading ? 'Verifying Admin Privileges...' : 'Sign In to Admin Dashboard'}</span>
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* 3. CUSTOMER REGISTRATION FORM */}
+          {authMode === 'user-register' && (
             <div className="card" style={{ padding: '2rem', border: '1.5px solid var(--primary-glow)' }}>
               <div style={{ marginBottom: '1.5rem' }}>
                 <h3 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <UserPlus size={18} color="var(--primary)" />
-                  <span>Create User Account</span>
+                  <span>Create Customer Account</span>
                 </h3>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  Stores your credentials securely in the PostgreSQL <code>users</code> table.
+                  Create an account to order genuine medicines with free delivery in Sawkhed Tejan.
                 </p>
               </div>
 
@@ -406,18 +484,6 @@ export const UserProfilePage = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Account Role</label>
-                  <select
-                    className="form-input"
-                    value={registerForm.role}
-                    onChange={e => setRegisterForm({ ...registerForm, role: e.target.value })}
-                  >
-                    <option value="customer">Customer (Order medicines & prescriptions)</option>
-                    <option value="admin">Store Admin / Owner (Full inventory control)</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
                   <label className="form-label">Phone Number</label>
                   <input
                     type="tel"
@@ -446,160 +512,206 @@ export const UserProfilePage = () => {
                   disabled={isLoading}
                 >
                   <UserPlus size={16} />
-                  <span>{isLoading ? 'Creating Account in Postgres...' : 'Register User'}</span>
+                  <span>{isLoading ? 'Creating Account...' : 'Register Customer Account'}</span>
                 </button>
               </form>
             </div>
           )}
 
-          {/* 3. PROFILE VIEW & EDIT */}
+          {/* 4. PROFILE VIEW & EDIT */}
           {authMode === 'profile' && (
             <div className="card" style={{ padding: '2rem', border: '1.5px solid var(--primary-glow)' }}>
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                paddingBottom: '1.5rem',
-                borderBottom: '1px solid var(--border-color)',
-                marginBottom: '1.5rem'
-              }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: currentUser.role === 'admin'
-                    ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
-                    : 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2rem',
-                  fontWeight: 800,
-                  marginBottom: '1rem',
-                  boxShadow: 'var(--shadow-md)'
-                }}>
-                  {currentUser.name ? currentUser.name.charAt(0) : 'U'}
-                </div>
+              {currentUser.isLoggedIn ? (
+                <>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    paddingBottom: '1.5rem',
+                    borderBottom: '1px solid var(--border-color)',
+                    marginBottom: '1.5rem'
+                  }}>
+                    <div style={{
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '50%',
+                      background: currentUser.role === 'admin'
+                        ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+                        : 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '2rem',
+                      fontWeight: 800,
+                      marginBottom: '1rem',
+                      boxShadow: 'var(--shadow-md)'
+                    }}>
+                      {currentUser.name ? currentUser.name.charAt(0) : 'U'}
+                    </div>
 
-                <h3 style={{ fontSize: '1.35rem', margin: '0 0 0.25rem 0' }}>{currentUser.name}</h3>
+                    <h3 style={{ fontSize: '1.35rem', margin: '0 0 0.25rem 0' }}>{currentUser.name}</h3>
 
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  background: currentUser.role === 'admin' ? 'rgba(37, 99, 235, 0.12)' : 'rgba(16, 185, 129, 0.12)',
-                  color: currentUser.role === 'admin' ? '#2563eb' : '#059669',
-                  padding: '0.3rem 0.85rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  marginTop: '0.25rem'
-                }}>
-                  <ShieldCheck size={14} />
-                  <span>{currentUser.role === 'admin' ? 'Store Owner / Admin' : 'Registered Customer'}</span>
-                </div>
-              </div>
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      background: currentUser.role === 'admin' ? 'rgba(37, 99, 235, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                      color: currentUser.role === 'admin' ? '#2563eb' : '#059669',
+                      padding: '0.3rem 0.85rem',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      marginTop: '0.25rem'
+                    }}>
+                      <ShieldCheck size={14} />
+                      <span>{currentUser.role === 'admin' ? 'Store Owner / Admin' : 'Registered Customer'}</span>
+                    </div>
 
-              {/* Profile Details or Live Edit Form */}
-              {isEditing ? (
-                <form onSubmit={handleProfileSave}>
-                  <div className="form-group">
-                    <label className="form-label">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      value={profileForm.name}
-                      onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
-                    />
+                    {currentUser.role === 'admin' && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{
+                          marginTop: '0.85rem',
+                          background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
+                          borderColor: '#1d4ed8'
+                        }}
+                        onClick={() => setActiveTab('stock')}
+                      >
+                        <LayoutDashboard size={14} />
+                        <span>Go to Admin Dashboard</span>
+                        <ArrowRight size={13} />
+                      </button>
+                    )}
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Phone Number</label>
-                    <input
-                      type="tel"
-                      required
-                      className="form-input"
-                      value={profileForm.phone}
-                      onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    />
-                  </div>
+                  {/* Profile Details or Live Edit Form */}
+                  {isEditing ? (
+                    <form onSubmit={handleProfileSave}>
+                      <div className="form-group">
+                        <label className="form-label">Full Name</label>
+                        <input
+                          type="text"
+                          required
+                          className="form-input"
+                          value={profileForm.name}
+                          onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
+                        />
+                      </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Email Address</label>
-                    <input
-                      type="email"
-                      className="form-input"
-                      value={profileForm.email}
-                      onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
-                    />
-                  </div>
+                      <div className="form-group">
+                        <label className="form-label">Phone Number</label>
+                        <input
+                          type="tel"
+                          required
+                          className="form-input"
+                          value={profileForm.phone}
+                          onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
+                        />
+                      </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Default Delivery Address</label>
-                    <textarea
-                      className="form-textarea"
-                      rows={2}
-                      value={profileForm.address}
-                      onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
-                    />
-                  </div>
+                      <div className="form-group">
+                        <label className="form-label">Email Address</label>
+                        <input
+                          type="email"
+                          className="form-input"
+                          value={profileForm.email}
+                          onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
+                        />
+                      </div>
 
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>
-                      Cancel
-                    </button>
-                    <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                      Save to Database
-                    </button>
-                  </div>
-                </form>
+                      <div className="form-group">
+                        <label className="form-label">Default Delivery Address</label>
+                        <textarea
+                          className="form-textarea"
+                          rows={2}
+                          value={profileForm.address}
+                          onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>
+                          Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                          Save Changes
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-secondary)' }}>
+                          <Phone size={16} color="var(--primary)" />
+                          <span><strong>Phone:</strong> {currentUser.phone || 'Not set'}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-secondary)' }}>
+                          <Mail size={16} color="var(--primary)" />
+                          <span><strong>Email:</strong> {currentUser.email || 'Not set'}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: 'var(--text-secondary)' }}>
+                          <MapPin size={16} color="var(--primary)" style={{ flexShrink: 0, marginTop: '3px' }} />
+                          <span><strong>Address:</strong> {currentUser.address || 'Not set'}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ width: '100%' }}
+                          onClick={() => {
+                            setProfileForm({
+                              name: currentUser.name || '',
+                              phone: currentUser.phone || '',
+                              email: currentUser.email || '',
+                              address: currentUser.address || ''
+                            });
+                            setIsEditing(true);
+                          }}
+                        >
+                          <Edit2 size={15} />
+                          <span>Edit Profile Credentials</span>
+                        </button>
+
+                        <button
+                          className="btn btn-outline-danger"
+                          style={{ width: '100%', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}
+                          onClick={logoutUser}
+                        >
+                          <LogOut size={15} />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-secondary)' }}>
-                      <Phone size={16} color="var(--primary)" />
-                      <span><strong>Phone:</strong> {currentUser.phone || 'Not set'}</span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-secondary)' }}>
-                      <Mail size={16} color="var(--primary)" />
-                      <span><strong>Email:</strong> {currentUser.email || 'Not set'}</span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: 'var(--text-secondary)' }}>
-                      <MapPin size={16} color="var(--primary)" style={{ flexShrink: 0, marginTop: '3px' }} />
-                      <span><strong>Address:</strong> {currentUser.address || 'Not set'}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                /* Guest View */
+                <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                  <User size={42} color="var(--text-muted)" style={{ margin: '0 auto 1rem auto' }} />
+                  <h3 style={{ marginBottom: '0.5rem' }}>Browsing as Guest</h3>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                    Sign in to your customer account or administrator portal to access your account features.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => setAuthMode('user-login')}
+                    >
+                      <LogIn size={15} />
+                      <span>Sign In as Customer</span>
+                    </button>
                     <button
                       className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                      onClick={() => {
-                        setProfileForm({
-                          name: currentUser.name || '',
-                          phone: currentUser.phone || '',
-                          email: currentUser.email || '',
-                          address: currentUser.address || ''
-                        });
-                        setIsEditing(true);
-                      }}
+                      onClick={() => setAuthMode('admin-login')}
+                      style={{ border: '1px solid #3b82f6', color: '#1d4ed8' }}
                     >
-                      <Edit2 size={15} />
-                      <span>Edit Profile Credentials</span>
-                    </button>
-
-                    <button
-                      className="btn btn-outline-danger"
-                      style={{ width: '100%', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}
-                      onClick={logoutUser}
-                    >
-                      <LogOut size={15} />
-                      <span>Sign Out</span>
+                      <ShieldCheck size={15} />
+                      <span>Admin Portal Login</span>
                     </button>
                   </div>
                 </div>
@@ -660,9 +772,12 @@ export const UserProfilePage = () => {
                     paddingTop: '0.75rem',
                     borderTop: '1px solid var(--border-color)'
                   }}>
-                    <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--primary-dark)' }}>
-                      ₹{order.totalAmount.toFixed(2)}
-                    </span>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Medicine Bill Total:</div>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--primary-dark)' }}>
+                        ₹{order.totalAmount.toFixed(2)}
+                      </span>
+                    </div>
 
                     <button
                       className="btn btn-secondary btn-sm"
@@ -671,6 +786,25 @@ export const UserProfilePage = () => {
                       <FileCheck size={14} />
                       <span>View Bill</span>
                     </button>
+                  </div>
+
+                  {/* Payment Details strictly below medicine bill total */}
+                  <div style={{
+                    marginTop: '0.75rem',
+                    padding: '0.75rem 1rem',
+                    background: 'var(--bg-page)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: '0.82rem'
+                  }}>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Smartphone size={14} color="var(--primary)" />
+                      <span>Payment Details</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem', color: 'var(--text-secondary)' }}>
+                      <span>UPI ID: <strong style={{ color: 'var(--text-primary)' }}>8237729148@upi</strong></span>
+                      <span>UPI Connected Mobile Number: <strong style={{ color: 'var(--text-primary)' }}>[8237729148]</strong></span>
+                    </div>
                   </div>
                 </div>
               ))}
