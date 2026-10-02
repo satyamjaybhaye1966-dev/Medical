@@ -334,7 +334,7 @@ export const CartModal = () => {
                 <span>Delivery & Contact Details</span>
               </h4>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div className="responsive-form-grid-2" style={{ marginBottom: '0.75rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Full Name *</label>
                   <input
@@ -390,7 +390,7 @@ export const CartModal = () => {
               {/* Payment Method Selector */}
               <div className="form-group">
                 <label className="form-label">Payment Mode</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                <div className="responsive-form-grid-3">
                   {['Cash on Delivery', 'UPI / QR Scan', 'Pay at Store'].map(method => (
                     <button
                       key={method}
@@ -415,12 +415,12 @@ export const CartModal = () => {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
                   onClick={clearCart}
-                  style={{ flex: '0 0 auto' }}
+                  style={{ flex: '1 1 100px' }}
                 >
                   Clear Cart
                 </button>
@@ -428,7 +428,7 @@ export const CartModal = () => {
                   type="submit"
                   disabled={isSubmitting}
                   className="btn btn-primary btn-lg"
-                  style={{ flex: 1 }}
+                  style={{ flex: '2 1 180px' }}
                 >
                   {isSubmitting ? 'Placing Order...' : `Confirm Order (₹${cartTotal.toFixed(2)})`}
                 </button>

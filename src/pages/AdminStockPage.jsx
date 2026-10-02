@@ -194,12 +194,7 @@ export const AdminStockPage = () => {
       </div>
 
       {/* KPI Metrics Dashboard Cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1.25rem',
-        marginBottom: '2rem'
-      }}>
+      <div className="responsive-stat-grid">
         {/* Total SKUs */}
         <div className="card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -263,7 +258,7 @@ export const AdminStockPage = () => {
       <div className="card no-print" style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: '1rem',
           alignItems: 'center'
         }}>
@@ -326,7 +321,7 @@ export const AdminStockPage = () => {
       </div>
 
       {/* Inventory Stock Table */}
-      <div className="card" style={{ padding: 0, overflowX: 'auto', marginBottom: '2rem' }}>
+      <div className="card table-responsive" style={{ padding: 0, marginBottom: '2rem' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
           <thead>
             <tr style={{ background: 'var(--bg-card-hover)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
@@ -499,7 +494,7 @@ export const AdminStockPage = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div className="responsive-form-grid-3">
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">Discount Price (₹) *</label>
                     <input
@@ -539,7 +534,7 @@ export const AdminStockPage = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div className="responsive-form-grid-3">
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">Manufacturer</label>
                     <input

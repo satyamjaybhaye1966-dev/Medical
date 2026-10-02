@@ -174,21 +174,23 @@ export const AuthModal = () => {
         {/* Mode Selector Tabs: Separate User Login, Register, Admin Login */}
         <div style={{
           display: 'flex',
-          padding: '0.75rem 1.5rem 0 1.5rem',
-          gap: '0.4rem',
-          borderBottom: '1px solid var(--border-color)'
+          padding: '0.5rem 1rem 0 1rem',
+          gap: '0.35rem',
+          borderBottom: '1px solid var(--border-color)',
+          flexWrap: 'wrap'
         }}>
           <button
             type="button"
             className="btn btn-sm"
             style={{
-              flex: 1,
+              flex: '1 1 85px',
               borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
               borderBottom: (!isAdminMode && !isRegisterMode) ? '3px solid var(--primary)' : '3px solid transparent',
               background: (!isAdminMode && !isRegisterMode) ? 'var(--primary-subtle)' : 'transparent',
               color: (!isAdminMode && !isRegisterMode) ? 'var(--primary-dark)' : 'var(--text-muted)',
               fontWeight: 700,
-              fontSize: '0.78rem'
+              fontSize: '0.78rem',
+              padding: '0.4rem 0.5rem'
             }}
             onClick={() => setAuthModalMode('user-login')}
           >
@@ -200,13 +202,14 @@ export const AuthModal = () => {
             type="button"
             className="btn btn-sm"
             style={{
-              flex: 1,
+              flex: '1 1 75px',
               borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
               borderBottom: isRegisterMode ? '3px solid var(--primary)' : '3px solid transparent',
               background: isRegisterMode ? 'var(--primary-subtle)' : 'transparent',
               color: isRegisterMode ? 'var(--primary-dark)' : 'var(--text-muted)',
               fontWeight: 700,
-              fontSize: '0.78rem'
+              fontSize: '0.78rem',
+              padding: '0.4rem 0.5rem'
             }}
             onClick={() => setAuthModalMode('user-register')}
           >
@@ -218,13 +221,14 @@ export const AuthModal = () => {
             type="button"
             className="btn btn-sm"
             style={{
-              flex: 1,
+              flex: '1 1 85px',
               borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
               borderBottom: isAdminMode ? '3px solid #d97706' : '3px solid transparent',
               background: isAdminMode ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
               color: isAdminMode ? '#b45309' : 'var(--text-muted)',
               fontWeight: 700,
-              fontSize: '0.78rem'
+              fontSize: '0.78rem',
+              padding: '0.4rem 0.5rem'
             }}
             onClick={() => setAuthModalMode('admin-login')}
           >
@@ -233,7 +237,7 @@ export const AuthModal = () => {
           </button>
         </div>
 
-        <div className="modal-body" style={{ padding: '1.5rem' }}>
+        <div className="modal-body">
           {/* Feedback Alerts */}
           {modalError && (
             <div style={{

@@ -23,12 +23,7 @@ export const Footer = () => {
       marginTop: 'auto'
     }}>
       <div className="container">
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '2.5rem',
-          marginBottom: '2.5rem'
-        }}>
+        <div className="responsive-footer-grid">
           {/* Col 1: Store & Owner Bio */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>

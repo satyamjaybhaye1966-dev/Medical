@@ -166,7 +166,7 @@ export const PrescriptionUploadModal = () => {
               </div>
 
               {/* Patient Details */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div className="responsive-form-grid-2" style={{ marginBottom: '0.75rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Patient Name *</label>
                   <input

@@ -5,7 +5,7 @@
     "customerPhone": "9356795127",
     "deliveryAddress": "1 (Sawkhed Tejan)",
     "orderDate": "2026-09-16 20:42",
-    "status": "Pending",
+    "status": "Delivered",
     "paymentMethod": "Cash on Delivery",
     "totalAmount": 221,
     "items": [
@@ -93,7 +93,7 @@
     "customerPhone": "8830615390",
     "deliveryAddress": "Sonal nagar near railway station jalna (Sawkhed Tejan)",
     "orderDate": "2026-09-16 20:41",
-    "status": "Pending",
+    "status": "Cancelled",
     "paymentMethod": "Cash on Delivery",
     "totalAmount": 300,
     "items": [
@@ -145,7 +145,7 @@
     "customerPhone": "8830615390",
     "deliveryAddress": "Sonal nagar near railway station jalna (Sawkhed Tejan)",
     "orderDate": "2026-09-16 19:58",
-    "status": "Pending",
+    "status": "Delivered",
     "paymentMethod": "UPI / QR Scan",
     "totalAmount": 2550,
     "items": [
@@ -179,7 +179,7 @@
     "customerPhone": "8830615390",
     "deliveryAddress": "Sonal nagar near railway station jalna (Sawkhed Tejan)",
     "orderDate": "2026-09-16 19:57",
-    "status": "Pending",
+    "status": "Delivered",
     "paymentMethod": "UPI / QR Scan",
     "totalAmount": 982,
     "items": [
@@ -267,7 +267,7 @@
     "customerPhone": "8830615390",
     "deliveryAddress": "Sonal nagar near railway station jalna (Sawkhed Tejan)",
     "orderDate": "2026-09-16 19:56",
-    "status": "Pending",
+    "status": "Delivered",
     "paymentMethod": "Cash on Delivery",
     "totalAmount": 115,
     "items": [
@@ -301,7 +301,7 @@
     "customerPhone": "8830615390",
     "deliveryAddress": "Sonal nagar near railway station jalna (Sawkhed Tejan)",
     "orderDate": "2026-09-16 06:08",
-    "status": "Pending",
+    "status": "Packed",
     "paymentMethod": "Cash on Delivery",
     "totalAmount": 157,
     "items": [
@@ -353,7 +353,7 @@
     "customerPhone": "8237729148",
     "deliveryAddress": "Sawkhed Tejan, Tq. Sindkhed Raja, Dist. Buldhana (Sawkhed Tejan)",
     "orderDate": "2026-09-16 06:07",
-    "status": "Pending",
+    "status": "Packed",
     "paymentMethod": "UPI / QR Scan",
     "totalAmount": 541,
     "items": [

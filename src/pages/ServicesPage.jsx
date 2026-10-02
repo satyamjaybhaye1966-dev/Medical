@@ -66,12 +66,7 @@ export const ServicesPage = () => {
       </div>
 
       {/* Services Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2rem',
-        marginBottom: '3.5rem'
-      }}>
+      <div className="responsive-category-grid" style={{ marginBottom: '3.5rem' }}>
         {STORE_SERVICES.map(service => (
           <div key={service.id} className="card card-hoverable" style={{
             display: 'flex',

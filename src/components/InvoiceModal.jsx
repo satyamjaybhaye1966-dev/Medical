@@ -45,7 +45,7 @@ export const InvoiceModal = () => {
         </div>
 
         {/* Printable Invoice Container */}
-        <div className="modal-body invoice-printable" style={{ padding: '2rem' }}>
+        <div className="modal-body invoice-printable" style={{ padding: 'clamp(0.85rem, 2.5vw, 2rem)' }}>
           {/* Header */}
           <div style={{
             borderBottom: '2px solid #059669',
@@ -53,7 +53,8 @@ export const InvoiceModal = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            gap: '1.5rem'
+            flexWrap: 'wrap',
+            gap: '1rem'
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem' }}>
@@ -92,10 +93,7 @@ export const InvoiceModal = () => {
           </div>
 
           {/* Invoice Meta details */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem',
+          <div className="responsive-form-grid-2" style={{
             padding: '1rem 0',
             borderBottom: '1px solid #e2e8f0',
             fontSize: '0.86rem'
@@ -116,28 +114,30 @@ export const InvoiceModal = () => {
           </div>
 
           {/* Items Table */}
-          <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1.25rem 0', fontSize: '0.86rem' }}>
-            <thead>
-              <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', textAlign: 'left' }}>
-                <th style={{ padding: '0.6rem 0.5rem' }}>#</th>
-                <th style={{ padding: '0.6rem 0.5rem' }}>Medicine Description</th>
-                <th style={{ padding: '0.6rem 0.5rem', textAlign: 'center' }}>Qty</th>
-                <th style={{ padding: '0.6rem 0.5rem', textAlign: 'right' }}>Unit Rate (₹)</th>
-                <th style={{ padding: '0.6rem 0.5rem', textAlign: 'right' }}>Total (₹)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeInvoiceOrder.items.map((item, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '0.6rem 0.5rem', color: '#64748b' }}>{idx + 1}</td>
-                  <td style={{ padding: '0.6rem 0.5rem', fontWeight: 600 }}>{item.name}</td>
-                  <td style={{ padding: '0.6rem 0.5rem', textAlign: 'center' }}>{item.quantity}</td>
-                  <td style={{ padding: '0.6rem 0.5rem', textAlign: 'right' }}>₹{item.price.toFixed(2)}</td>
-                  <td style={{ padding: '0.6rem 0.5rem', textAlign: 'right', fontWeight: 700 }}>₹{(item.price * item.quantity).toFixed(2)}</td>
+          <div className="table-responsive">
+            <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1.25rem 0', fontSize: '0.86rem' }}>
+              <thead>
+                <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', textAlign: 'left' }}>
+                  <th style={{ padding: '0.6rem 0.5rem' }}>#</th>
+                  <th style={{ padding: '0.6rem 0.5rem' }}>Medicine Description</th>
+                  <th style={{ padding: '0.6rem 0.5rem', textAlign: 'center' }}>Qty</th>
+                  <th style={{ padding: '0.6rem 0.5rem', textAlign: 'right' }}>Unit Rate (₹)</th>
+                  <th style={{ padding: '0.6rem 0.5rem', textAlign: 'right' }}>Total (₹)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {activeInvoiceOrder.items.map((item, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '0.6rem 0.5rem', color: '#64748b' }}>{idx + 1}</td>
+                    <td style={{ padding: '0.6rem 0.5rem', fontWeight: 600 }}>{item.name}</td>
+                    <td style={{ padding: '0.6rem 0.5rem', textAlign: 'center' }}>{item.quantity}</td>
+                    <td style={{ padding: '0.6rem 0.5rem', textAlign: 'right' }}>₹{item.price.toFixed(2)}</td>
+                    <td style={{ padding: '0.6rem 0.5rem', textAlign: 'right', fontWeight: 700 }}>₹{(item.price * item.quantity).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Total calculation */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
@@ -221,9 +221,7 @@ export const InvoiceModal = () => {
               </span>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            <div className="responsive-form-grid-2" style={{
               gap: '0.75rem',
               fontSize: '0.86rem'
             }}>

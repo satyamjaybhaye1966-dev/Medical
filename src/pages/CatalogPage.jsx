@@ -94,7 +94,7 @@ export const CatalogPage = () => {
       <div className="card" style={{ marginBottom: '2rem', padding: '1.25rem' }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: '1rem',
           alignItems: 'center',
           marginBottom: '1rem'
@@ -274,11 +274,7 @@ export const CatalogPage = () => {
 
       {/* Grid View */}
       {viewMode === 'grid' && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.5rem'
-        }}>
+        <div className="responsive-medicine-grid">
           {filteredMedicines.map(med => (
             <MedicineCard
               key={med.id}
@@ -291,7 +287,7 @@ export const CatalogPage = () => {
 
       {/* List View */}
       {viewMode === 'list' && filteredMedicines.length > 0 && (
-        <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+        <div className="card table-responsive" style={{ padding: 0 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
             <thead>
               <tr style={{ background: 'var(--bg-card-hover)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>

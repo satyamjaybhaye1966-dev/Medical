@@ -61,6 +61,17 @@ export const StoreProvider = ({ children }) => {
     setIsAuthModalOpen(true);
   };
 
+  // Chatbot State
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [chatbotInitialQuery, setChatbotInitialQuery] = useState('');
+
+  const openChatbot = (query = '') => {
+    if (query) {
+      setChatbotInitialQuery(query);
+    }
+    setIsChatbotOpen(true);
+  };
+
   // Quick Toast Alerts
   const [toasts, setToasts] = useState([]);
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
@@ -662,7 +673,12 @@ export const StoreProvider = ({ children }) => {
       getWhatsAppOrderUrl,
       catalogSearchQuery,
       setCatalogSearchQuery,
-      navigateToCatalogWithSearch
+      navigateToCatalogWithSearch,
+      isChatbotOpen,
+      setIsChatbotOpen,
+      chatbotInitialQuery,
+      setChatbotInitialQuery,
+      openChatbot
     }}>
       {children}
 

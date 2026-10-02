@@ -77,12 +77,7 @@ export const CustomerReqPage = () => {
         </p>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2.5rem',
-        alignItems: 'start'
-      }}>
+      <div className="responsive-two-col">
         {/* Left Column: Requirement Form */}
         <div>
           <div className="card" style={{ border: '2px solid var(--primary-glow)', boxShadow: 'var(--shadow-lg)' }}>

@@ -115,12 +115,7 @@ export const AdminOrdersPage = () => {
       </div>
 
       {/* Analytics KPI Row */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1.25rem',
-        marginBottom: '2rem'
-      }}>
+      <div className="responsive-stat-grid">
         {/* Pending Orders */}
         <div
           className="card"
@@ -206,7 +201,7 @@ export const AdminOrdersPage = () => {
           </div>
 
           {/* Search Box */}
-          <div style={{ position: 'relative', minWidth: '240px' }}>
+          <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 0 }}>
             <Search
               size={16}
               color="var(--text-muted)"
@@ -269,12 +264,7 @@ export const AdminOrdersPage = () => {
             </div>
 
             {/* Middle: Customer Details & Ordered Items */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: '1.5rem',
-              marginBottom: '1.25rem'
-            }}>
+            <div className="responsive-two-col" style={{ marginBottom: '1.25rem' }}>
               {/* Customer Info */}
               <div style={{
                 background: 'var(--bg-page)',

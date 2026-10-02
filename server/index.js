@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import { pool, initializeDatabase, getPostgresStatus } from './db.js';
+import { processChatMessage } from '../src/services/chatbotEngine.js';
 
 dotenv.config();
 
@@ -771,6 +772,45 @@ app.put('/api/requirements/:id', async (req, res) => {
 });
 
 // -------------------------------------------------------------
+// GURU HEALTHBOT AI CHAT API ROUTE
+// -------------------------------------------------------------
+app.post('/api/chat', async (req, res) => {
+  const { message, language = 'en', userId, userName } = req.body;
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  const medicines = readData(MEDICINES_FILE, initialMedicines);
+  let orders = readData(ORDERS_FILE, initialOrders);
+
+  try {
+    if (getPostgresStatus().connected) {
+      const result = await pool.query(`
+        SELECT id, customer_name AS "customerName", customer_phone AS "customerPhone",
+               delivery_address AS "deliveryAddress", order_date AS "orderDate",
+               status, payment_method AS "paymentMethod", CAST(total_amount AS FLOAT) AS "totalAmount",
+               items, notes
+        FROM orders
+      `);
+      if (result.rows && result.rows.length > 0) {
+        orders = result.rows;
+      }
+    }
+  } catch (err) {
+    console.error('Postgres chat orders query error:', err.message);
+  }
+
+  const botResult = processChatMessage(message, {
+    medicines,
+    orders,
+    currentUser: { id: userId, name: userName },
+    preferredLanguage: language
+  });
+
+  return res.json(botResult);
+});
+
+// -------------------------------------------------------------
 // USER AUTHENTICATION & CREDENTIALS ROUTES
 // -------------------------------------------------------------
 
@@ -1137,8 +1177,21 @@ app.get('/api/users', async (req, res) => {
   res.json(users);
 });
 
+// Serve static frontend in unified single-link mode
+const DIST_DIR = path.join(__dirname, '../dist');
+if (fs.existsSync(DIST_DIR)) {
+  app.use(express.static(DIST_DIR));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return next();
+    }
+    res.sendFile(path.join(DIST_DIR, 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`🏥 Guru Medical Store Server running on port ${PORT}`);
+  console.log(`🌐 Unified Single Link: http://localhost:${PORT}/`);
   console.log(`📍 Location: Sawkhed Tejan, Sindkhed Raja, Buldhana`);
   console.log(`📞 Owner: MR. Rushikesh Suresh Mante (8237729148)`);
 });

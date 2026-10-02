@@ -20,7 +20,8 @@ import {
   UserPlus,
   Lock,
   LogOut,
-  CheckCircle2
+  CheckCircle2,
+  Bot
 } from 'lucide-react';
 import { GlobalSearchBar } from './GlobalSearchBar';
 
@@ -37,7 +38,9 @@ export const Navbar = () => {
     logoutUser,
     getWhatsAppOrderUrl,
     openAuthModal,
-    dbStatus
+    dbStatus,
+    isChatbotOpen,
+    setIsChatbotOpen
   } = useStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -243,7 +246,7 @@ export const Navbar = () => {
           <div className="nav-actions">
             {!currentUser.isLoggedIn ? (
               /* Not logged in: Separate User & Admin Login */
-              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <div className="nav-desktop-auth">
                 <button
                   className="btn btn-sm btn-primary"
                   onClick={() => openAuthModal('user-login')}
@@ -299,7 +302,7 @@ export const Navbar = () => {
               </div>
             ) : currentUser.role === 'admin' ? (
               /* Admin is logged in: Admin Controls */
-              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <div className="nav-desktop-auth">
                 <button
                   className="btn btn-sm btn-primary"
                   onClick={() => handleNavClick('stock')}
@@ -334,7 +337,7 @@ export const Navbar = () => {
               </div>
             ) : (
               /* User is logged in: Customer Controls */
-              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <div className="nav-desktop-auth">
                 <button
                   className="btn btn-sm btn-secondary"
                   onClick={() => handleNavClick('profile')}
@@ -371,7 +374,7 @@ export const Navbar = () => {
 
             {/* Dark / Light Toggle */}
             <button
-              className="btn-icon"
+              className="btn-icon nav-desktop-auth"
               onClick={toggleTheme}
               title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
             >
@@ -380,11 +383,23 @@ export const Navbar = () => {
 
             {/* Profile Tab Button */}
             <button
-              className={`btn-icon ${activeTab === 'profile' ? 'btn-primary' : ''}`}
+              className={`btn-icon nav-desktop-auth ${activeTab === 'profile' ? 'btn-primary' : ''}`}
               onClick={() => handleNavClick('profile')}
               title="User Account & Prescriptions"
             >
               <User size={18} />
+            </button>
+
+            {/* AI HealthBot Assistant Trigger */}
+            <button
+              className="navbar-ai-bot-btn"
+              onClick={() => setIsChatbotOpen(!isChatbotOpen)}
+              title="Ask Guru HealthBot (AI Pharmacy Assistant)"
+              aria-label="Open AI HealthBot"
+            >
+              <Bot size={17} />
+              <span className="navbar-ai-bot-label">Ask HealthBot</span>
+              <span className="navbar-ai-pulse-dot" />
             </button>
 
             {/* Shopping Cart Button */}
@@ -399,9 +414,9 @@ export const Navbar = () => {
 
             {/* Mobile Hamburger Toggle */}
             <button
-              className="btn-icon"
-              style={{ display: 'none' }}
+              className="btn-icon nav-mobile-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -457,6 +472,27 @@ export const Navbar = () => {
             )}
             <button className="nav-btn" onClick={() => handleNavClick('owner')}>Owner Page</button>
             <button className="nav-btn" onClick={() => handleNavClick('profile')}>User Profile</button>
+            <button
+              className="nav-btn"
+              style={{ color: 'var(--primary)', fontWeight: 700 }}
+              onClick={() => {
+                setIsChatbotOpen(true);
+                setMobileMenuOpen(false);
+              }}
+            >
+              <Bot size={16} /> Ask Guru HealthBot (AI)
+            </button>
+
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem' }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                onClick={toggleTheme}
+              >
+                {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
+                <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+              </button>
+            </div>
           </div>
         )}
       </nav>

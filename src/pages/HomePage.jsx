@@ -70,12 +70,7 @@ export const HomePage = () => {
         overflow: 'hidden'
       }}>
         <div className="container">
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '3rem',
-            alignItems: 'center'
-          }}>
+          <div className="responsive-hero-grid">
             {/* Left Column: Hero Text */}
             <div>
               <div className="section-tag" style={{ marginBottom: '1rem' }}>
@@ -83,7 +78,7 @@ export const HomePage = () => {
                 <span>Trusted Rural Healthcare & 24x7 Pharmacy</span>
               </div>
 
-              <h1 style={{ fontSize: '2.85rem', lineHeight: 1.15, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
+              <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.85rem)', lineHeight: 1.15, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
                 Your Health, Our Priority at <span style={{ color: 'var(--primary)', borderBottom: '3px solid var(--primary)' }}>{storeDetails.name}</span>
               </h1>
 
@@ -242,6 +237,8 @@ export const HomePage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
                   marginBottom: '1.25rem',
                   boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
                 }}>
@@ -389,11 +386,7 @@ export const HomePage = () => {
             </p>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem'
-          }}>
+          <div className="responsive-category-grid">
             {categories.map((cat, index) => (
               <div
                 key={index}
@@ -462,11 +455,7 @@ export const HomePage = () => {
             </button>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem'
-          }}>
+          <div className="responsive-medicine-grid">
             {popularMedicines.map(med => (
               <MedicineCard
                 key={med.id}
@@ -483,15 +472,12 @@ export const HomePage = () => {
           ========================================================================= */}
       <section style={{ padding: '4rem 0' }}>
         <div className="container">
-          <div className="card" style={{
+          <div className="card responsive-two-col" style={{
             background: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #0369a1 100%)',
             color: '#ffffff',
-            padding: '3rem 2.5rem',
+            padding: 'clamp(1.25rem, 3.5vw, 2.5rem)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-xl)',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '2.5rem',
             alignItems: 'center'
           }}>
             <div>
@@ -590,11 +576,7 @@ export const HomePage = () => {
             </p>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem'
-          }}>
+          <div className="responsive-category-grid">
             <div className="card">
               <p style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.95rem' }}>
                 "Mr. Rushikesh Mante is always helpful. During my father's cardiac emergency at midnight, he immediately opened the medical store and arranged the injections. Truly a lifesaver in Sawkhed Tejan!"

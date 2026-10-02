@@ -7,6 +7,7 @@ import { PrescriptionUploadModal } from './components/PrescriptionUploadModal';
 import { InvoiceModal } from './components/InvoiceModal';
 import { AuthModal } from './components/AuthModal';
 import { FloatingCartButton } from './components/FloatingCartButton';
+import { Chatbot } from './components/Chatbot';
 
 import { HomePage } from './pages/HomePage';
 import { CatalogPage } from './pages/CatalogPage';
@@ -104,6 +105,9 @@ const AppContent = () => {
 
       {/* Floating Persistent Quick Cart Button */}
       <FloatingCartButton />
+
+      {/* Global AI HealthBot Widget */}
+      <Chatbot />
 
       {/* Global Modals */}
       <CartModal />

@@ -47,12 +47,7 @@ export const OwnerPage = () => {
         </p>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2.5rem',
-        alignItems: 'start'
-      }}>
+      <div className="responsive-two-col">
         {/* Left Column: Owner Profile Card & Bio */}
         <div>
           <div className="card" style={{

@@ -202,12 +202,7 @@ export const UserProfilePage = () => {
         </p>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2.5rem',
-        alignItems: 'start'
-      }}>
+      <div className="responsive-two-col">
         {/* Left Column: Auth Card / Profile Card */}
         <div>
           {/* Auth Tab Toggle */}
